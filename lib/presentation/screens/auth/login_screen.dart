@@ -66,119 +66,94 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           // Header with curved image
           SliverAppBar(
             backgroundColor: Colors.transparent,
-            expandedHeight: 320,
+            expandedHeight: screenHeight * 0.38,
             floating: false,
             pinned: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
+                fit: StackFit.expand,
                 children: [
-                  // Curved background image
+                  // Responsive, scrollable image
                   ClipPath(
                     clipper: _CurvedBottomClipper(),
                     child: Container(
-                      height: 350,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(
+                      height: screenHeight * 0.4,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
                             'assets/images/portrait-young-african-guy-accepts-order-by-phone-motorbike-holding-boxes-with-pizza-sit-his-bike-urban-place.jpg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: AppTheme.primaryColor,
+                              );
+                            },
                           ),
-                          fit: BoxFit.cover,
-                          colorFilter: ColorFilter.mode(
-                            Colors.black.withOpacity(0.4),
-                            BlendMode.darken,
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.5),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.6),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
                   
-                  // Back button
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + 10,
-                    left: 16,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: IconButton(
-                        onPressed: () => AppRouter.pop(),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  
-                  // Logo and title overlay
+                  // Title and welcome text
                   Positioned(
                     bottom: 60,
                     left: 0,
                     right: 0,
                     child: Column(
                       children: [
-                        Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryColor.withOpacity(0.4),
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.local_shipping,
-                            size: 40,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
                         Text(
-                          'WELCOME BACK',
+                          'Welcome Back',
                           style: GoogleFonts.lexend(
-                            fontSize: 32,
+                            fontSize: 28,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            letterSpacing: 1.5,
+                            letterSpacing: 0.5,
                             shadows: [
-                              Shadow(
-                                color: Colors.black.withOpacity(0.5),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
+                              const Shadow(
+                                color: Colors.black,
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
                           'Sign in to continue your journey',
                           style: GoogleFonts.lexend(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withOpacity(0.9),
-                            letterSpacing: 0.5,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            shadows: [
+                              const Shadow(
+                                color: Colors.black,
+                                blurRadius: 6,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -191,35 +166,36 @@ class _LoginScreenState extends State<LoginScreen> {
           
           // Login form
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+            child: Container(
+              margin: const EdgeInsets.only(top: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
-                  Text(
-                    'LOG IN TO YOUR ACCOUNT',
-                    style: GoogleFonts.lexend(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                      letterSpacing: 0.5,
+                  // Form Title
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'Login to your account',
+                      style: GoogleFonts.lexend(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[900],
+                      ),
                     ),
                   ),
                   
-                  const SizedBox(height: 6),
-                  
-                  Text(
-                    'Enter your credentials to access your account',
-                    style: GoogleFonts.lexend(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey[700],
-                      letterSpacing: 0.3,
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 32),
+                    child: Text(
+                      'Enter your credentials to access your account',
+                      style: GoogleFonts.lexend(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ),
-                  
-                  const SizedBox(height: 32),
                   
                   // Login Form
                   FormBuilder(
@@ -227,127 +203,148 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         // Phone Number Field
-                        FormBuilderTextField(
-                          name: 'phone',
-                          decoration: InputDecoration(
-                            labelText: 'PHONE NUMBER',
-                            labelStyle: GoogleFonts.lexend(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
-                              fontSize: 13,
-                              letterSpacing: 1.0,
-                            ),
-                            hintText: '7XX XXX XXX',
-                            hintStyle: GoogleFonts.lexend(
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey[500],
-                            ),
-                            prefixIcon: Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '+254',
-                                    style: GoogleFonts.lexend(
-                                      color: Colors.grey[800],
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    width: 1.5,
-                                    height: 22,
-                                    color: Colors.grey[400],
-                                  ),
-                                ],
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 20),
+                          child: FormBuilderTextField(
+                            name: 'phone',
+                            decoration: InputDecoration(
+                              labelText: 'Phone Number',
+                              labelStyle: GoogleFonts.lexend(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
+                                fontSize: 14,
                               ),
+                              hintText: '7XX XXX XXX',
+                              hintStyle: GoogleFonts.lexend(
+                                color: Colors.grey[500],
+                              ),
+                              prefixIcon: Container(
+                                margin: const EdgeInsets.only(right: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '+254',
+                                      style: GoogleFonts.lexend(
+                                        color: Colors.grey[800],
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      width: 1.5,
+                                      height: 24,
+                                      color: Colors.grey[300],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            style: GoogleFonts.lexend(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              color: Colors.grey[900],
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                            keyboardType: TextInputType.phone,
+                            validator: (value) => _phoneValidator(value),
                           ),
-                          style: GoogleFonts.lexend(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.grey[900],
-                          ),
-                          keyboardType: TextInputType.phone,
-                          validator: (value) => _phoneValidator(value),
                         ),
-                        
-                        const SizedBox(height: 22),
                         
                         // Password Field
-                        FormBuilderTextField(
-                          name: 'password',
-                          decoration: InputDecoration(
-                            labelText: 'PASSWORD',
-                            labelStyle: GoogleFonts.lexend(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
-                              fontSize: 13,
-                              letterSpacing: 1.0,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.lock_outline,
-                              color: Colors.grey[600],
-                              size: 22,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: Colors.grey[600],
-                                size: 22,
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: FormBuilderTextField(
+                            name: 'password',
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              labelStyle: GoogleFonts.lexend(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
+                                fontSize: 14,
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                child: Image.asset(
+                                  'assets/icons/padlock.png',
+                                  width: 20,
+                                  height: 20,
+                                  color: Colors.grey[600],
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.lock_outline_rounded,
+                                      size: 20,
+                                      color: Colors.grey[600],
+                                    );
+                                  },
+                                ),
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Image.asset(
+                                  _obscurePassword
+                                      ? 'assets/icons/hidden.png'
+                                      : 'assets/icons/eye.png',
+                                  width: 20,
+                                  height: 20,
+                                  color: Colors.grey[600],
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off_rounded
+                                          : Icons.visibility_rounded,
+                                      size: 20,
+                                      color: Colors.grey[600],
+                                    );
+                                  },
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            style: GoogleFonts.lexend(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              color: Colors.grey[900],
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                            obscureText: _obscurePassword,
+                            validator: (value) => _passwordValidator(value),
                           ),
-                          style: GoogleFonts.lexend(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.grey[900],
-                          ),
-                          obscureText: _obscurePassword,
-                          validator: (value) => _passwordValidator(value),
                         ),
-                        
-                        const SizedBox(height: 18),
                         
                         // Forgot Password
                         Align(
@@ -357,42 +354,40 @@ class _LoginScreenState extends State<LoginScreen> {
                               // TODO: Implement forgot password
                             },
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                             ),
                             child: Text(
-                              'FORGOT PASSWORD?',
+                              'Forgot Password?',
                               style: GoogleFonts.lexend(
                                 color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                                letterSpacing: 0.8,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
                             ),
                           ),
                         ),
                         
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 8),
                         
-                        // Login Button
+                        // Login Button with custom icon
                         SizedBox(
                           width: double.infinity,
-                          height: 58,
+                          height: 54,
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,
                               foregroundColor: Colors.white,
-                              elevation: 8,
-                              shadowColor: AppTheme.primaryColor.withOpacity(0.4),
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
                             child: _isLoading
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
                                       color: Colors.white,
@@ -401,25 +396,33 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        'SIGN IN',
-                                        style: GoogleFonts.lexend(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 1.2,
-                                        ),
+                                      Image.asset(
+                                        'assets/icons/log-in.png',
+                                        width: 20,
+                                        height: 20,
+                                        color: Colors.white,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Icon(
+                                            Icons.login_rounded,
+                                            size: 20,
+                                            color: Colors.white,
+                                          );
+                                        },
                                       ),
-                                      const SizedBox(width: 10),
-                                      const Icon(
-                                        Icons.arrow_forward_rounded,
-                                        size: 22,
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'Sign In',
+                                        style: GoogleFonts.lexend(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ],
                                   ),
                           ),
                         ),
                         
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 32),
                         
                         // Divider with "or"
                         Row(
@@ -427,82 +430,84 @@ class _LoginScreenState extends State<LoginScreen> {
                             Expanded(
                               child: Divider(
                                 color: Colors.grey[300],
-                                thickness: 1.5,
+                                thickness: 1,
                               ),
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
-                                'OR CONTINUE WITH',
+                                'or continue with',
                                 style: GoogleFonts.lexend(
                                   color: Colors.grey[600],
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                  letterSpacing: 1.0,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
                             Expanded(
                               child: Divider(
                                 color: Colors.grey[300],
-                                thickness: 1.5,
+                                thickness: 1,
                               ),
                             ),
                           ],
                         ),
                         
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 32),
                         
                         // Google Login Button
                         SizedBox(
                           width: double.infinity,
-                          height: 58,
+                          height: 54,
                           child: OutlinedButton(
                             onPressed: _isLoading ? null : _loginWithGoogle,
                             style: OutlinedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
+                              foregroundColor: Colors.grey[800],
                               side: BorderSide(
                                 color: Colors.grey[300]!,
-                                width: 1.5,
+                                width: 1,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              elevation: 2,
-                              shadowColor: Colors.grey[100],
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                  'assets/icons/google.png',
-                                  height: 26,
-                                  width: 26,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 26,
-                                      height: 26,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[200],
-                                        borderRadius: BorderRadius.circular(13),
-                                      ),
-                                      child: Icon(
-                                        Icons.g_mobiledata,
-                                        size: 20,
-                                        color: Colors.grey[700],
-                                      ),
-                                    );
-                                  },
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: Colors.white,
+                                  ),
+                                  child: Center(
+                                    child: Image.asset(
+                                      'assets/icons/google.png',
+                                      width: 20,
+                                      height: 20,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Text(
+                                          'G',
+                                          style: GoogleFonts.lexend(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.red,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(width: 14),
+                                const SizedBox(width: 12),
                                 Text(
-                                  'CONTINUE WITH GOOGLE',
+                                  'Continue with Google',
                                   style: GoogleFonts.lexend(
                                     fontSize: 15,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w500,
                                     color: Colors.grey[800],
-                                    letterSpacing: 0.8,
                                   ),
                                 ),
                               ],
@@ -510,7 +515,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         
-                        const SizedBox(height: 34),
+                        const SizedBox(height: 40),
                         
                         // Register Option
                         Row(
@@ -520,38 +525,25 @@ class _LoginScreenState extends State<LoginScreen> {
                               "Don't have an account? ",
                               style: GoogleFonts.lexend(
                                 color: Colors.grey[700],
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 0.3,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                             GestureDetector(
                               onTap: _goToRegister,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: AppTheme.primaryColor,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  'SIGN UP NOW',
-                                  style: GoogleFonts.lexend(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15,
-                                    letterSpacing: 0.8,
-                                  ),
+                              child: Text(
+                                'Sign Up',
+                                style: GoogleFonts.lexend(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),
                           ],
                         ),
                         
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 32),
                         
                         // Terms and Privacy
                         Padding(
@@ -563,7 +555,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
                               color: Colors.grey[600],
-                              letterSpacing: 0.2,
                               height: 1.5,
                             ),
                           ),
@@ -587,21 +578,21 @@ class _CurvedBottomClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     path.lineTo(0, 0);
-    path.lineTo(0, size.height - 50);
+    path.lineTo(0, size.height - 40);
     
-    // Create a curved bottom
+    // Create a smoother curved bottom
     path.quadraticBezierTo(
-      size.width / 4, 
+      size.width * 0.25, 
       size.height,
-      size.width / 2, 
-      size.height - 30,
+      size.width * 0.5, 
+      size.height - 20,
     );
     
     path.quadraticBezierTo(
-      3 * size.width / 4, 
-      size.height - 60,
+      size.width * 0.75, 
+      size.height - 40,
       size.width, 
-      size.height - 50,
+      size.height - 40,
     );
     
     path.lineTo(size.width, 0);

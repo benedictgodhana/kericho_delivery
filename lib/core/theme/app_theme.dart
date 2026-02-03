@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'text_theme.dart';
 
 class AppTheme {
@@ -26,7 +27,7 @@ class AppTheme {
     primarySwatch: createMaterialColor(primaryColor),
     scaffoldBackgroundColor: scaffoldBackground,
     cardColor: cardColor,
-    fontFamily: 'BrandonGrotesque',
+    fontFamily: GoogleFonts.lexend().fontFamily,
     
     textTheme: TextTheme(
       displayLarge: AppTextTheme.displayLarge.copyWith(color: textPrimary),
@@ -46,13 +47,12 @@ class AppTheme {
       labelSmall: AppTextTheme.labelSmall.copyWith(color: textSecondary),
     ),
     
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.white,
       foregroundColor: textPrimary,
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(
-        fontFamily: 'BrandonGrotesque',
+      titleTextStyle: GoogleFonts.lexend(
         fontWeight: FontWeight.w700,
         fontSize: 18,
         color: textPrimary,

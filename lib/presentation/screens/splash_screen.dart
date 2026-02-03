@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
 import 'package:kericho_delivery/core/theme/app_theme.dart';
+import 'package:kericho_delivery/core/constants/app_icons.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -137,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Pizza Icon with delivery effect
+                            // Custom Icon with delivery effect
                             Container(
                               width: 120,
                               height: 120,
@@ -155,10 +156,11 @@ class _SplashScreenState extends State<SplashScreen>
                               child: Stack(
                                 children: [
                                   Center(
-                                    child: Icon(
-                                      Icons.local_pizza,
-                                      size: 70,
-                                      color: AppTheme.primaryColor,
+                                    child: Image.asset(
+                                      AppIcons.shopping,
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.contain,
                                     ),
                                   ),
                                   // Delivery effect
@@ -178,10 +180,11 @@ class _SplashScreenState extends State<SplashScreen>
                                           ),
                                         ],
                                       ),
-                                      child: const Icon(
-                                        Icons.delivery_dining,
-                                        color: Colors.white,
-                                        size: 18,
+                                      child: Image.asset(
+                                        AppIcons.deliveryMan,
+                                        width: 18,
+                                        height: 18,
+                                        fit: BoxFit.contain,
                                       ),
                                     ),
                                   ),

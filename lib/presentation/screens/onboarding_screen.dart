@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
 import 'package:kericho_delivery/core/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kericho_delivery/core/constants/app_icons.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -21,28 +22,28 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     OnboardingItem(
       title: 'Fast Delivery in Kericho',
       description: 'Get your favorite food, groceries, and more delivered to your doorstep in minutes.',
-      image: Icons.delivery_dining,
+      assetImage: AppIcons.deliveryMan,
       color: Colors.white,
       subtitle: 'QUICK & RELIABLE',
     ),
     OnboardingItem(
       title: 'Wide Variety of Stores',
       description: 'Choose from restaurants, supermarkets, pharmacies, and local shops across Kericho.',
-      image: Icons.storefront,
+      assetImage: AppIcons.shopping,
       color: Colors.white,
       subtitle: 'ENDLESS CHOICES',
     ),
     OnboardingItem(
       title: 'Easy M-Pesa Payments',
       description: 'Pay securely with M-Pesa. Cash on delivery also available for your convenience.',
-      image: Icons.phone_android,
+      icon: Icons.phone_android,
       color: Colors.white,
       subtitle: 'SECURE & CONVENIENT',
     ),
     OnboardingItem(
       title: 'Real-Time Tracking',
       description: 'Track your order live on the map. Know exactly when your delivery arrives.',
-      image: Icons.location_on,
+      icon: Icons.location_on,
       color: Colors.white,
       subtitle: 'STAY INFORMED',
     ),
@@ -316,7 +317,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Animated Icon Container
+          // Animated Icon/Asset Container
           AnimatedBuilder(
             animation: _iconAnimation,
             builder: (context, child) {
@@ -346,11 +347,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     child: Stack(
                       children: [
                         Center(
-                          child: Icon(
-                            item.image,
-                            size: 75,
-                            color: Colors.white,
-                          ),
+                          child: item.assetImage != null
+                              ? Image.asset(
+                                  item.assetImage!,
+                                  width: 75,
+                                  height: 75,
+                                  fit: BoxFit.contain,
+                                )
+                              : Icon(
+                                  item.icon!,
+                                  size: 75,
+                                  color: Colors.white,
+                                ),
                         ),
                         // Glow effect
                         Positioned.fill(
@@ -455,14 +463,16 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 class OnboardingItem {
   final String title;
   final String description;
-  final IconData image;
+  final String? assetImage;
+  final IconData? icon;
   final Color color;
   final String subtitle;
 
   OnboardingItem({
     required this.title,
     required this.description,
-    required this.image,
+    this.assetImage,
+    this.icon,
     required this.color,
     required this.subtitle,
   });

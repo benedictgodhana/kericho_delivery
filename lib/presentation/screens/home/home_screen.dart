@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   int _currentCarouselIndex = 0;
   int _selectedCategoryIndex = 0;
+  bool _isRefreshingLocation = false;
 
   final List<CategoryItem> _categories = [
     CategoryItem(
@@ -88,6 +89,56 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshLocation() async {
+    setState(() {
+      _isRefreshingLocation = true;
+    });
+    
+    final locationProvider =
+        Provider.of<LocationProvider>(context, listen: false);
+    
+    try {
+      await locationProvider.getCurrentLocation();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Location updated successfully!',
+            style: TextStyle(
+              fontFamily: 'Legend',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: AppTheme.primaryColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update location: $e',
+            style: TextStyle(
+              fontFamily: 'Legend',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: Color(0xFFFF3B30),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isRefreshingLocation = false;
+      });
+    }
+  }
+
   void _navigateToMerchant(String merchantId, String merchantName) {
     AppRouter.pushNamed(
       AppRouter.merchant,
@@ -126,312 +177,417 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Food Background
-              Container(
-                height: 220,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/fast_food.jpg'),
-                    fit: BoxFit.cover,
-                    colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.5),
-                      BlendMode.darken,
+              // TALLER Curved Header with Enhanced Location
+              Stack(
+                children: [
+                  // TALLER Curved Background Image - INCREASED HEIGHT
+                  ClipPath(
+                    clipper: CurvedHeaderClipper(),
+                    child: Container(
+                      height: 280, // INCREASED from 240 to 280
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/fast_food.jpg'),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.6),
+                            BlendMode.darken,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Column(
-                    children: [
-                      // App Bar
-                      Row(
-                        children: [
-                          // Location with food icon
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                // TODO: Open location picker
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
+                  
+                  // Content Overlay
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20), // Increased vertical padding
+                    child: Column(
+                      children: [
+                        // Enhanced App Bar with Location
+                        Row(
+                          children: [
+                            // Location with Enhanced Features
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: _refreshLocation,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14), // Increased vertical padding
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.4),
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Stack(
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            color: Colors.white,
+                                            size: 22, // Slightly larger icon
+                                          ),
+                                          if (_isRefreshingLocation)
+                                            Positioned(
+                                              right: 0,
+                                              top: 0,
+                                              child: Container(
+                                                width: 8,
+                                                height: 8,
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryColor,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  '📍 DELIVERING TO',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Legend',
+                                                    fontSize: 11, // Slightly larger
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.white.withOpacity(0.9),
+                                                    letterSpacing: 1.0,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                // Check if location is accurate
+                                                if (_isRefreshingLocation == false && 
+                                                    locationProvider.currentLocation != null)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 8, vertical: 3), // Slightly larger
+                                                    decoration: BoxDecoration(
+                                                      color: Color(0xFF34C759).withOpacity(0.8),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: Text(
+                                                      'ACTIVE',
+                                                      style: TextStyle(
+                                                        fontFamily: 'Legend',
+                                                        fontSize: 9, // Slightly larger
+                                                        fontWeight: FontWeight.w700,
+                                                        color: Colors.white,
+                                                        letterSpacing: 0.8,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6), // Increased spacing
+                                            Text(
+                                              locationProvider.currentLocation?.address ??
+                                                  'Kericho, Kenya',
+                                              style: TextStyle(
+                                                fontFamily: 'Legend',
+                                                fontSize: 16, // Increased from 14
+                                                fontWeight: FontWeight.w800,
+                                                color: Colors.white,
+                                                letterSpacing: 0.2,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4), // Increased spacing
+                                            Text(
+                                              'Tap to refresh location',
+                                              style: TextStyle(
+                                                fontFamily: 'Legend',
+                                                fontSize: 11, // Slightly larger
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.white.withOpacity(0.8),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (!_isRefreshingLocation)
+                                        Icon(
+                                          Icons.refresh,
+                                          color: Colors.white.withOpacity(0.8),
+                                          size: 20, // Slightly larger
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.location_on,
-                                      color: Colors.white,
-                                      size: 20,
+                              ),
+                            ),
+
+                            const SizedBox(width: 12),
+
+                            // Enhanced Action Buttons
+                            Row(
+                              children: [
+                                // Notification Bell
+                                Container(
+                                  width: 46, // Increased size
+                                  height: 46, // Increased size
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(14), // Slightly larger
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.4),
+                                      width: 1.5,
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'DELIVERING TO',
-                                            style: TextStyle(
-                                              fontFamily: 'BrandonGrotesque',
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white.withOpacity(0.8),
-                                              letterSpacing: 1.0,
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      Center(
+                                        child: Icon(
+                                          Icons.notifications_outlined,
+                                          color: Colors.white,
+                                          size: 22, // Slightly larger
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 7,
+                                        top: 7,
+                                        child: Container(
+                                          width: 9, // Slightly larger
+                                          height: 9, // Slightly larger
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFFFF3B30),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 1.5,
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            locationProvider.currentLocation?.address ??
-                                                'Kericho, Kenya',
-                                            style: TextStyle(
-                                              fontFamily: 'BrandonGrotesque',
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(width: 12),
+
+                                // Cart Button
+                                Stack(
+                                  children: [
+                                    Container(
+                                      width: 46, // Increased size
+                                      height: 46, // Increased size
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(14), // Slightly larger
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.4),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: IconButton(
+                                        icon: Icon(
+                                          Icons.shopping_bag_outlined,
+                                          color: Colors.white,
+                                          size: 22, // Slightly larger
+                                        ),
+                                        onPressed: _navigateToCart,
+                                      ),
+                                    ),
+                                    if (appProvider.cartItemCount > 0)
+                                      Positioned(
+                                        right: -2,
+                                        top: -2,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(5), // Slightly larger
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFFFF3B30),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
                                               color: Colors.white,
-                                              letterSpacing: 0.3,
+                                              width: 2,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.red.withOpacity(0.3),
+                                                blurRadius: 6,
+                                                spreadRadius: 1,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Text(
+                                            appProvider.cartItemCount > 9
+                                                ? '9+'
+                                                : appProvider.cartItemCount.toString(),
+                                            style: TextStyle(
+                                              fontFamily: 'Legend',
+                                              fontSize: 9, // Slightly larger
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 32), // Increased spacing
+
+                        // Welcome Section - ENHANCED for taller header
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: 'HELLO, ',
+                                            style: TextStyle(
+                                              fontFamily: 'Legend',
+                                              fontSize: 30, // Increased from 26
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white,
+                                              letterSpacing: 0.6,
+                                              shadows: [
+                                                Shadow(
+                                                  color: Colors.black.withOpacity(0.4),
+                                                  blurRadius: 15,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: appProvider.user?.fullName
+                                                        ?.split(' ')
+                                                        .first
+                                                        .toUpperCase() ??
+                                                'FOODIE',
+                                            style: TextStyle(
+                                              fontFamily: 'Legend',
+                                              fontSize: 30, // Increased from 26
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFFFFD600),
+                                              letterSpacing: 0.6,
+                                              shadows: [
+                                                Shadow(
+                                                  color: Colors.black.withOpacity(0.4),
+                                                  blurRadius: 15,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: '!',
+                                            style: TextStyle(
+                                              fontFamily: 'Legend',
+                                              fontSize: 30, // Increased from 26
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white,
+                                              letterSpacing: 0.6,
+                                            ),
                                           ),
                                         ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10), // Increased spacing
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.star,
+                                          size: 16, // Slightly larger
+                                          color: Color(0xFFFFD600),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Premium Member',
+                                          style: TextStyle(
+                                            fontFamily: 'Legend',
+                                            fontSize: 14, // Increased from 12
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white.withOpacity(0.9),
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8), // Increased spacing
+                                    Text(
+                                      '🍕 What delicious meal are you craving today? 🍔',
+                                      style: TextStyle(
+                                        fontFamily: 'Legend',
+                                        fontSize: 14, // Increased from 12
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white.withOpacity(0.9),
+                                        letterSpacing: 0.2,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          // Cart & Profile
-                          Row(
-                            children: [
-                              // Cart with food-themed badge
-                              Stack(
-                                children: [
-                                  Container(
-                                    width: 45,
-                                    height: 45,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Colors.white.withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: IconButton(
-                                      icon: Icon(
-                                        Icons.shopping_bag_outlined,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                      onPressed: _navigateToCart,
-                                    ),
+                              Container(
+                                width: 80, // Increased from 65
+                                height: 80, // Increased from 65
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.25),
+                                  borderRadius: BorderRadius.circular(22), // Slightly larger
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.4),
+                                    width: 2.5, // Thicker border
                                   ),
-                                  if (appProvider.cartItemCount > 0)
-                                    Positioned(
-                                      right: -2,
-                                      top: -2,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Color(0xFFFF3B30),
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.red.withOpacity(0.3),
-                                              blurRadius: 5,
-                                              spreadRadius: 1,
-                                            ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          appProvider.cartItemCount > 9
-                                              ? '9+'
-                                              : appProvider.cartItemCount.toString(),
-                                          style: TextStyle(
-                                            fontFamily: 'BrandonGrotesque',
-                                            fontSize: 10,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 15,
+                                      spreadRadius: 3,
                                     ),
-                                ],
-                              ),
-
-                              const SizedBox(width: 12),
-
-                              // Profile with food avatar
-                              GestureDetector(
-                                onTap: _navigateToProfile,
-                                child: Container(
-                                  width: 45,
-                                  height: 45,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: appProvider.user?.profileImage != null
-                                      ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.network(
-                                            appProvider.user!.profileImage!,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.person,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.local_pizza,
+                                  color: Colors.white,
+                                  size: 38, // Larger icon
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Welcome Text with Food Theme
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'HELLO, ',
-                                          style: TextStyle(
-                                            fontFamily: 'BrandonGrotesque',
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
-                                            letterSpacing: 0.5,
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.black.withOpacity(0.3),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: appProvider.user?.fullName
-                                                      ?.split(' ')
-                                                      .first
-                                                      .toUpperCase() ??
-                                              'FOODIE',
-                                          style: TextStyle(
-                                            fontFamily: 'BrandonGrotesque',
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w900,
-                                            color: Color(0xFFFFD600),
-                                            letterSpacing: 0.5,
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.black.withOpacity(0.3),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: '!',
-                                          style: TextStyle(
-                                            fontFamily: 'BrandonGrotesque',
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    '🍕 What delicious meal are you craving today? 🍔',
-                                    style: TextStyle(
-                                      fontFamily: 'BrandonGrotesque',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white.withOpacity(0.9),
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              width: 70,
-                              height: 70,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.local_pizza,
-                                color: Colors.white,
-                                size: 36,
-                              ),
-                            ),
-                          ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
 
-              // Search Bar - Food Themed
+              // Search Bar with Enhanced Design - ADJUSTED MARGIN
               Padding(
                 padding: const EdgeInsets.only(
-                    left: 20, right: 20, top: 25, bottom: 8),
+                    left: 20, right: 20, top: 30, bottom: 8), // Increased top margin
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: AppTheme.primaryColor.withOpacity(0.12),
                         blurRadius: 20,
                         spreadRadius: 2,
                         offset: const Offset(0, 8),
@@ -441,44 +597,61 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: '🔍 Search for restaurants, groceries, pizza...',
+                      hintText: '🔍 Search restaurants, groceries, pizza...',
                       hintStyle: TextStyle(
-                        fontFamily: 'BrandonGrotesque',
-                        fontSize: 15,
+                        fontFamily: 'Legend',
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: Colors.grey[500],
-                        letterSpacing: 0.3,
+                        letterSpacing: 0.2,
                       ),
                       prefixIcon: Container(
-                        margin: const EdgeInsets.only(left: 15),
+                        margin: const EdgeInsets.only(left: 12),
                         child: Icon(
                           Icons.search_rounded,
                           color: AppTheme.primaryColor,
-                          size: 24,
+                          size: 22,
                         ),
                       ),
                       suffixIcon: Container(
-                        margin: const EdgeInsets.only(right: 10),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.tune_rounded,
-                            color: AppTheme.primaryColor,
-                            size: 24,
-                          ),
-                          onPressed: () {
-                            // TODO: Open filters
-                          },
+                        margin: const EdgeInsets.only(right: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.qr_code_scanner_rounded,
+                                color: AppTheme.primaryColor,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                // TODO: Open QR Scanner
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.tune_rounded,
+                                color: AppTheme.primaryColor,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                // TODO: Open filters
+                              },
+                            ),
+                          ],
                         ),
                       ),
                       border: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
-                        vertical: 18,
-                        horizontal: 20,
+                        vertical: 16,
+                        horizontal: 16,
                       ),
                     ),
                     style: TextStyle(
-                      fontFamily: 'BrandonGrotesque',
-                      fontSize: 16,
+                      fontFamily: 'Legend',
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.grey[800],
                     ),
@@ -489,17 +662,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
+              // Quick Action Chips
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: SizedBox(
+                  height: 36,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      _buildQuickActionChip('🚚 Free Delivery', Icons.local_shipping),
+                      const SizedBox(width: 8),
+                      _buildQuickActionChip('⭐ Top Rated', Icons.star),
+                      const SizedBox(width: 8),
+                      _buildQuickActionChip('⚡ Fast', Icons.flash_on),
+                      const SizedBox(width: 8),
+                      _buildQuickActionChip('💳 Pay', Icons.credit_card),
+                    ],
+                  ),
+                ),
+              ),
+
               // Food Promo Carousel
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 25),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Column(
                   children: [
                     carousel_slider.CarouselSlider(
                       options: carousel_slider.CarouselOptions(
-                        height: 170,
+                        height: 160,
                         viewportFraction: 0.88,
                         autoPlay: true,
-                        autoPlayInterval: const Duration(seconds: 5),
+                        autoPlayInterval: const Duration(seconds: 6),
                         autoPlayCurve: Curves.fastOutSlowIn,
                         onPageChanged: (index, reason) {
                           setState(() => _currentCarouselIndex = index);
@@ -507,35 +701,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       items: [
                         _buildFoodPromoCard(
-                          '🎉 FIRST ORDER FREE DELIVERY',
-                          'Use code: FOODLOVE',
+                          '🎉 FREE DELIVERY',
+                          'First order • Use code: WELCOME50',
                           Color(0xFFFF6B35),
                           Icons.local_shipping,
                         ),
                         _buildFoodPromoCard(
-                          '🍕 20% OFF ON PIZZA ORDERS',
-                          'Valid until Friday',
+                          '🍕 30% OFF PIZZA',
+                          'Order above KSh 500 • Until Friday',
                           Color(0xFF5856D6),
                           Icons.local_pizza,
                         ),
                         _buildFoodPromoCard(
-                          '☕ FREE TEA WITH KSH 500+ ORDER',
-                          'Kericho Special Blend',
+                          '☕ BUY 1 GET 1',
+                          'Kericho Tea • All day offer',
                           AppTheme.primaryColor,
                           Icons.local_cafe,
                         ),
                       ],
                     ),
 
-                    // Food-themed Carousel Indicators
-                    const SizedBox(height: 15),
+                    // Enhanced Carousel Indicators
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [0, 1, 2].map((index) {
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
-                          width: _currentCarouselIndex == index ? 30 : 10,
-                          height: 8,
+                          width: _currentCarouselIndex == index ? 28 : 10,
+                          height: 6,
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
@@ -580,26 +774,59 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         Text(
-                          '🍴 EXPLORE CATEGORIES',
+                          '🍴 CATEGORIES',
                           style: TextStyle(
-                            fontFamily: 'BrandonGrotesque',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Legend',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
                             color: Colors.grey[900],
-                            letterSpacing: 0.5,
+                            letterSpacing: 0.6,
                           ),
                         ),
                         const Spacer(),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 16,
-                          color: Colors.grey[500],
+                        GestureDetector(
+                          onTap: () {
+                            // TODO: View all categories
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primaryColor.withOpacity(0.1),
+                                  Color(0xFF34C759).withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'VIEW ALL',
+                                  style: TextStyle(
+                                    fontFamily: 'Legend',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryColor,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 12,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
                     SizedBox(
-                      height: 150,
+                      height: 140,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
@@ -614,7 +841,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               merchantProvider.filterByCategory(category.tag);
                             },
                             child: Container(
-                              width: 130,
+                              width: 120,
                               margin: EdgeInsets.only(
                                 right: index == _categories.length - 1 ? 0 : 15,
                               ),
@@ -635,7 +862,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 child: Stack(
                                   children: [
-                                    // Background Image with Gradient
+                                    // Background with Gradient
                                     Positioned.fill(
                                       child: Container(
                                         decoration: BoxDecoration(
@@ -643,24 +870,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                             begin: Alignment.topCenter,
                                             end: Alignment.bottomCenter,
                                             colors: [
-                                              category.color.withOpacity(0.8),
-                                              category.color.withOpacity(0.6),
+                                              category.color.withOpacity(0.9),
+                                              category.color.withOpacity(0.7),
                                             ],
                                           ),
                                         ),
                                       ),
                                     ),
 
-                                    // Food Pattern Overlay
+                                    // Image Overlay
                                     Positioned.fill(
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          image: DecorationImage(
-                                            image: AssetImage(category.image),
-                                            fit: BoxFit.cover,
-                                            colorFilter: ColorFilter.mode(
-                                              Colors.black.withOpacity(0.2),
-                                              BlendMode.darken,
+                                      child: Opacity(
+                                        opacity: 0.15,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                              image: AssetImage(category.image),
+                                              fit: BoxFit.cover,
                                             ),
                                           ),
                                         ),
@@ -670,80 +896,80 @@ class _HomeScreenState extends State<HomeScreen> {
                                     // Content
                                     Positioned.fill(
                                       child: Container(
+                                        padding: const EdgeInsets.all(16),
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             begin: Alignment.topCenter,
                                             end: Alignment.bottomCenter,
                                             colors: [
                                               Colors.transparent,
-                                              Colors.black.withOpacity(0.3),
+                                              Colors.black.withOpacity(0.4),
                                             ],
                                           ),
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(18),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                width: 50,
-                                                height: 50,
-                                                decoration: BoxDecoration(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Container(
+                                              width: 45,
+                                              height: 45,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white
+                                                    .withOpacity(0.25),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                border: Border.all(
                                                   color: Colors.white
-                                                      .withOpacity(0.2),
-                                                  borderRadius:
-                                                      BorderRadius.circular(15),
+                                                      .withOpacity(0.4),
+                                                  width: 1.5,
                                                 ),
-                                                child: Center(
-                                                  child: Text(
-                                                    category.emoji,
-                                                    style: TextStyle(
-                                                      fontSize: 28,
-                                                    ),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  category.emoji,
+                                                  style: TextStyle(
+                                                    fontSize: 26,
                                                   ),
                                                 ),
                                               ),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    category.name,
-                                                    style: TextStyle(
-                                                      fontFamily:
-                                                          'BrandonGrotesque',
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Colors.white,
-                                                      letterSpacing: 0.5,
-                                                    ),
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  category.name,
+                                                  style: TextStyle(
+                                                    fontFamily:
+                                                        'Legend',
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: Colors.white,
+                                                    letterSpacing: 0.4,
                                                   ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    'Order Now →',
-                                                    style: TextStyle(
-                                                      fontFamily:
-                                                          'BrandonGrotesque',
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: Colors.white
-                                                          .withOpacity(0.9),
-                                                    ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Discover →',
+                                                  style: TextStyle(
+                                                    fontFamily:
+                                                        'Legend',
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white
+                                                        .withOpacity(0.9),
                                                   ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
 
-                                    // Selection Border
+                                    // Selection Effect
                                     if (_selectedCategoryIndex == index)
                                       Positioned.fill(
                                         child: Container(
@@ -759,7 +985,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 color: Colors.white
                                                     .withOpacity(0.3),
                                                 blurRadius: 15,
-                                                spreadRadius: 2,
+                                                spreadRadius: 3,
                                               ),
                                             ],
                                           ),
@@ -777,7 +1003,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Featured Restaurants
+              // Featured Restaurants with Enhanced Design
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Column(
@@ -786,37 +1012,47 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         Text(
-                          '⭐ FEATURED IN KERICHO',
+                          '⭐ FEATURED',
                           style: TextStyle(
-                            fontFamily: 'BrandonGrotesque',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Legend',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
                             color: Colors.grey[900],
-                            letterSpacing: 0.5,
+                            letterSpacing: 0.6,
                           ),
                         ),
                         const Spacer(),
-                        TextButton(
-                          onPressed: () {
-                            // TODO: View all featured
-                          },
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.primaryColor,
+                                Color(0xFFFFD600),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           child: Row(
                             children: [
                               Text(
                                 'VIEW ALL',
                                 style: TextStyle(
-                                  fontFamily: 'BrandonGrotesque',
-                                  color: AppTheme.primaryColor,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                  letterSpacing: 0.8,
+                                  fontFamily: 'Legend',
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Icon(
                                 Icons.arrow_forward_rounded,
-                                color: AppTheme.primaryColor,
-                                size: 16,
+                                color: Colors.white,
+                                size: 14,
                               ),
                             ],
                           ),
@@ -840,31 +1076,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         Text(
-                          '🍽️ ALL RESTAURANTS',
+                          '🍽️ NEAR YOU',
                           style: TextStyle(
-                            fontFamily: 'BrandonGrotesque',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Legend',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
                             color: Colors.grey[900],
-                            letterSpacing: 0.5,
+                            letterSpacing: 0.6,
                           ),
                         ),
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.2),
+                              width: 1.2,
+                            ),
                           ),
                           child: Text(
                             '${merchantProvider.merchants.length} SHOPS',
                             style: TextStyle(
-                              fontFamily: 'BrandonGrotesque',
+                              fontFamily: 'Legend',
                               fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: AppTheme.primaryColor,
-                              letterSpacing: 0.5,
+                              letterSpacing: 0.6,
                             ),
                           ),
                         ),
@@ -872,63 +1112,86 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Category Filter Chips with Food Icons
+                    // Enhanced Category Filter
                     SizedBox(
-                      height: 60,
+                      height: 55,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         children: merchantProvider.categories.map((category) {
                           final icon = _getCategoryIcon(category);
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: ChoiceChip(
-                              label: Row(
+                          final isSelected =
+                              merchantProvider.selectedCategory == category;
+                          return GestureDetector(
+                            onTap: () {
+                              merchantProvider.filterByCategory(category);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? LinearGradient(
+                                        colors: [
+                                          AppTheme.primaryColor,
+                                          Color(0xFFFFD600),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : LinearGradient(
+                                        colors: [
+                                          Colors.white,
+                                          Colors.grey[50]!,
+                                        ],
+                                      ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(
+                                        isSelected ? 0.15 : 0.06),
+                                    blurRadius: 12,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppTheme.primaryColor.withOpacity(0.2)
+                                      : Colors.grey[200]!,
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(icon),
-                                  const SizedBox(width: 6),
+                                  Text(
+                                    icon,
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  const SizedBox(width: 8),
                                   Text(
                                     category.toUpperCase(),
                                     style: TextStyle(
-                                      fontFamily: 'BrandonGrotesque',
+                                      fontFamily: 'Legend',
                                       fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.grey[700],
+                                      letterSpacing: 0.4,
                                     ),
                                   ),
                                 ],
                               ),
-                              selected: merchantProvider.selectedCategory ==
-                                  category,
-                              onSelected: (_) {
-                                merchantProvider.filterByCategory(category);
-                              },
-                              selectedColor: AppTheme.primaryColor,
-                              backgroundColor: Colors.white,
-                              labelStyle: TextStyle(
-                                fontFamily: 'BrandonGrotesque',
-                                color: merchantProvider.selectedCategory ==
-                                        category
-                                    ? Colors.white
-                                    : Colors.grey[700],
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                side: BorderSide(
-                                  color: Colors.grey[200]!,
-                                  width: 1,
-                                ),
-                              ),
-                              elevation: 2,
-                              shadowColor: Colors.grey.withOpacity(0.2),
                             ),
                           );
                         }).toList(),
                       ),
                     ),
 
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 24),
 
                     // Merchant List
                     merchantProvider.isLoading
@@ -951,17 +1214,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // Food-themed Bottom Navigation Bar
+      // Enhanced Bottom Navigation Bar
       bottomNavigationBar: Container(
-        height: 85,
+        height: 80,
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.12),
               blurRadius: 25,
-              spreadRadius: 5,
-              offset: const Offset(0, -5),
+              spreadRadius: 3,
+              offset: const Offset(0, -8),
             ),
           ],
           borderRadius: const BorderRadius.only(
@@ -972,14 +1235,48 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildFoodBottomNavItem(Icons.home_filled, 'HOME', true),
-            _buildFoodBottomNavItem(Icons.history, 'ORDERS', false,
+            _buildEnhancedBottomNavItem(Icons.home_filled, 'Home', true),
+            _buildEnhancedBottomNavItem(Icons.history, 'Orders', false,
                 onTap: _navigateToOrderHistory),
-            _buildFoodBottomNavItem(Icons.explore, 'EXPLORE', false),
-            _buildFoodBottomNavItem(Icons.person, 'PROFILE', false,
+            _buildEnhancedBottomNavItem(Icons.explore, 'Explore', false),
+            _buildEnhancedBottomNavItem(Icons.person, 'Profile', false,
                 onTap: _navigateToProfile),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionChip(String text, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withOpacity(0.2),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: AppTheme.primaryColor,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontFamily: 'Legend',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1008,7 +1305,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.all(20),
         child: Row(
           children: [
             Expanded(
@@ -1019,11 +1316,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontFamily: 'BrandonGrotesque',
-                      fontSize: 19,
+                      fontFamily: 'Legend',
+                      fontSize: 18,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.4,
                       shadows: [
                         Shadow(
                           color: Colors.black.withOpacity(0.2),
@@ -1033,34 +1330,34 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontFamily: 'BrandonGrotesque',
-                      fontSize: 14,
+                      fontFamily: 'Legend',
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.white.withOpacity(0.9),
-                      letterSpacing: 0.3,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ],
               ),
             ),
             Container(
-              width: 70,
-              height: 70,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.4),
                   width: 2,
                 ),
               ),
               child: Icon(
                 icon,
-                size: 36,
+                size: 32,
                 color: Colors.white,
               ),
             ),
@@ -1090,7 +1387,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Merchant Image with Food Badges
+            // Merchant Image with Enhanced Badges
             Stack(
               children: [
                 ClipRRect(
@@ -1099,32 +1396,58 @@ class _HomeScreenState extends State<HomeScreen> {
                     topRight: Radius.circular(25),
                   ),
                   child: Container(
-                    height: 190,
+                    height: 180,
                     width: double.infinity,
                     color: Colors.grey[200],
                     child: merchant.imageUrl != null
                         ? CachedNetworkImage(
                             imageUrl: merchant.imageUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Center(
-                              child: CircularProgressIndicator(
-                                color: AppTheme.primaryColor,
+                            placeholder: (context, url) => Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.grey[200]!,
+                                    Colors.grey[300]!,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryColor,
+                                ),
                               ),
                             ),
                             errorWidget: (context, url, error) => Container(
-                              color: Colors.grey[200],
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.grey[200]!,
+                                    Colors.grey[300]!,
+                                  ],
+                                ),
+                              ),
                               child: const Icon(
                                 Icons.restaurant,
-                                size: 80,
+                                size: 60,
                                 color: Colors.grey,
                               ),
                             ),
                           )
                         : Container(
-                            color: Colors.grey[200],
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.grey[200]!,
+                                  Colors.grey[300]!,
+                                ],
+                              ),
+                            ),
                             child: const Icon(
                               Icons.restaurant,
-                              size: 80,
+                              size: 60,
                               color: Colors.grey,
                             ),
                           ),
@@ -1151,38 +1474,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // Open/Closed Badge
+                // Status Badge
                 Positioned(
                   top: 16,
                   left: 16,
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: merchant.isOpen ? Color(0xFF34C759) : Color(0xFFFF3B30),
+                      gradient: merchant.isOpen
+                          ? LinearGradient(
+                              colors: [
+                                Color(0xFF34C759),
+                                Color(0xFF2ECC71),
+                              ],
+                            )
+                          : LinearGradient(
+                              colors: [
+                                Color(0xFFFF3B30),
+                                Color(0xFFFF6B6B),
+                              ],
+                            ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 8,
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 10,
                         ),
                       ],
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          merchant.isOpen ? Icons.check_circle : Icons.cancel,
+                          merchant.isOpen
+                              ? Icons.check_circle
+                              : Icons.cancel_rounded,
                           size: 14,
                           color: Colors.white,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          merchant.isOpen ? 'OPEN NOW' : 'CLOSED',
+                          merchant.isOpen ? 'OPEN' : 'CLOSED',
                           style: TextStyle(
-                            fontFamily: 'BrandonGrotesque',
-                            fontSize: 12,
+                            fontFamily: 'Legend',
+                            fontSize: 11,
                             color: Colors.white,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w900,
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -1198,7 +1535,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     right: 16,
                     child: Container(
                       padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -1210,14 +1547,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.orange.withOpacity(0.3),
-                            blurRadius: 8,
+                            blurRadius: 10,
                           ),
                         ],
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            Icons.star,
+                            Icons.star_rounded,
                             size: 14,
                             color: Colors.white,
                           ),
@@ -1225,10 +1562,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             'FEATURED',
                             style: TextStyle(
-                              fontFamily: 'BrandonGrotesque',
-                              fontSize: 12,
+                              fontFamily: 'Legend',
+                              fontSize: 11,
                               color: Colors.white,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w900,
                               letterSpacing: 1.0,
                             ),
                           ),
@@ -1237,7 +1574,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                // Rating & Delivery Time at bottom
+                // Bottom Info Bar
                 Positioned(
                   bottom: 16,
                   left: 16,
@@ -1254,8 +1591,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 5,
+                              color: Colors.black.withOpacity(0.12),
+                              blurRadius: 8,
                             ),
                           ],
                         ),
@@ -1263,24 +1600,24 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Icon(
                               Icons.star_rounded,
-                              size: 18,
+                              size: 16,
                               color: Color(0xFFFF9500),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               merchant.rating.toStringAsFixed(1),
                               style: TextStyle(
-                                fontFamily: 'BrandonGrotesque',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Legend',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
                                 color: Colors.grey[900],
                               ),
                             ),
                             Text(
                               ' (${merchant.ratingCount})',
                               style: TextStyle(
-                                fontFamily: 'BrandonGrotesque',
-                                fontSize: 14,
+                                fontFamily: 'Legend',
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[600],
                               ),
@@ -1289,7 +1626,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      // Delivery Time
+                      // Delivery Info
                       Container(
                         padding:
                             const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -1304,7 +1641,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           boxShadow: [
                             BoxShadow(
                               color: AppTheme.primaryColor.withOpacity(0.3),
-                              blurRadius: 5,
+                              blurRadius: 8,
                             ),
                           ],
                         ),
@@ -1312,16 +1649,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Icon(
                               Icons.delivery_dining_rounded,
-                              size: 18,
+                              size: 16,
                               color: Colors.white,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               '${merchant.deliveryTime} MIN',
                               style: TextStyle(
-                                fontFamily: 'BrandonGrotesque',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Legend',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
                                 color: Colors.white,
                               ),
                             ),
@@ -1336,54 +1673,101 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // Merchant Details
             Padding(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          merchant.name.toUpperCase(),
-                          style: TextStyle(
-                            fontFamily: 'BrandonGrotesque',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.grey[900],
-                            letterSpacing: 0.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              merchant.name.toUpperCase(),
+                              style: TextStyle(
+                                fontFamily: 'Legend',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.grey[900],
+                                letterSpacing: 0.4,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  size: 14,
+                                  color: AppTheme.primaryColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'Kericho, Kenya',
+                                    style: TextStyle(
+                                      fontFamily: 'Legend',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[600],
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                       // Favorite Button
-                      IconButton(
-                        icon: Icon(
-                          Provider.of<AppProvider>(context)
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Provider.of<AppProvider>(context)
                                   .isFavorite(merchant.id)
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                          color: Color(0xFFFF3B30),
-                          size: 28,
+                              ? Color(0xFFFF3B30).withOpacity(0.1)
+                              : Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.grey[200]!,
+                            width: 1.2,
+                          ),
                         ),
-                        onPressed: () {
-                          Provider.of<AppProvider>(context, listen: false)
-                              .toggleFavorite(merchant);
-                        },
+                        child: IconButton(
+                          icon: Icon(
+                            Provider.of<AppProvider>(context)
+                                    .isFavorite(merchant.id)
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color: Provider.of<AppProvider>(context)
+                                    .isFavorite(merchant.id)
+                                ? Color(0xFFFF3B30)
+                                : Colors.grey[400],
+                            size: 22,
+                          ),
+                          onPressed: () {
+                            Provider.of<AppProvider>(context, listen: false)
+                                .toggleFavorite(merchant);
+                          },
+                        ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
                   Text(
                     merchant.description,
                     style: TextStyle(
-                      fontFamily: 'BrandonGrotesque',
-                      fontSize: 15,
+                      fontFamily: 'Legend',
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: Colors.grey[700],
-                      height: 1.6,
+                      height: 1.5,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -1394,52 +1778,61 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Food Tags
                   if (merchant.tags != null && merchant.tags!.isNotEmpty)
                     Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: merchant.tags!.map((tag) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
+                            horizontal: 12,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(20),
+                            color: AppTheme.primaryColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.grey[200]!,
-                              width: 1.5,
+                              color: AppTheme.primaryColor.withOpacity(0.2),
+                              width: 1.2,
                             ),
                           ),
                           child: Text(
                             '#${tag.toUpperCase()}',
                             style: TextStyle(
-                              fontFamily: 'BrandonGrotesque',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey[700],
-                              letterSpacing: 0.5,
+                              fontFamily: 'Legend',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor,
+                              letterSpacing: 0.4,
                             ),
                           ),
                         );
                       }).toList(),
                     ),
 
-                  // Delivery Fee & Minimum Order
+                  // Additional Info - FIXED OVERFLOW
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      _buildInfoChip(
-                        Icons.monetization_on_rounded,
-                        'Delivery: KSh ${merchant.deliveryFee.toInt()}',
-                        Color(0xFF34C759),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildInfoChip(
-                        Icons.shopping_bag_rounded,
-                        'Min: KSh ${merchant.minimumOrder?.toInt() ?? 0}',
-                        Color(0xFF5856D6),
-                      ),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildEnhancedInfoChip(
+                          Icons.monetization_on_rounded,
+                          'Delivery: KSh ${merchant.deliveryFee.toInt()}',
+                          Color(0xFF34C759),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildEnhancedInfoChip(
+                          Icons.shopping_bag_rounded,
+                          'Min: KSh ${merchant.minimumOrder?.toInt() ?? 0}',
+                          Color(0xFF5856D6),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildEnhancedInfoChip(
+                          Icons.phone,
+                          'Call Now',
+                          Color(0xFFFF9500),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1452,7 +1845,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFoodLoadingState() {
     return Container(
-      padding: const EdgeInsets.all(60),
+      padding: const EdgeInsets.all(50),
       child: Column(
         children: [
           Container(
@@ -1469,34 +1862,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: CircularProgressIndicator(
                 color: Colors.white,
                 strokeWidth: 3,
               ),
             ),
           ),
-          const SizedBox(height: 25),
+          const SizedBox(height: 20),
           Text(
             '🍳 PREPARING YOUR FOOD OPTIONS...',
             style: TextStyle(
-              fontFamily: 'BrandonGrotesque',
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Colors.grey[700],
-              letterSpacing: 1.0,
+              fontFamily: 'Legend',
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: Colors.grey[800],
+              letterSpacing: 0.8,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
-            'Fresh meals coming right up!',
+            'Fresh meals are being prepared!',
             style: TextStyle(
-              fontFamily: 'BrandonGrotesque',
-              fontSize: 14,
+              fontFamily: 'Legend',
+              fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[500],
-              letterSpacing: 0.3,
+              color: Colors.grey[600],
+              letterSpacing: 0.2,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1507,7 +1900,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFoodEmptyState() {
     return Container(
-      padding: const EdgeInsets.all(50),
+      padding: const EdgeInsets.all(40),
       child: Column(
         children: [
           Container(
@@ -1527,21 +1920,19 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Center(
               child: Text(
                 '🍕',
-                style: TextStyle(
-                  fontSize: 70,
-                ),
+                style: TextStyle(fontSize: 70),
               ),
             ),
           ),
-          const SizedBox(height: 25),
+          const SizedBox(height: 20),
           Text(
             'NO RESTAURANTS FOUND',
             style: TextStyle(
-              fontFamily: 'BrandonGrotesque',
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Colors.grey[800],
-              letterSpacing: 1.0,
+              fontFamily: 'Legend',
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.grey[900],
+              letterSpacing: 0.8,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1549,37 +1940,37 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             'Try adjusting your search or explore different categories',
             style: TextStyle(
-              fontFamily: 'BrandonGrotesque',
-              fontSize: 15,
+              fontFamily: 'Legend',
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.grey[600],
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 25),
-         // ...existing code...
-ElevatedButton(
-  onPressed: () {
-    Provider.of<MerchantProvider>(context, listen: false).clearCategory();
-  },
-// ...existing code...
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Provider.of<MerchantProvider>(context, listen: false)
+                  .clearCategory();
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 25, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
-              elevation: 5,
+              elevation: 6,
               shadowColor: AppTheme.primaryColor.withOpacity(0.3),
             ),
             child: Text(
-              'EXPLORE ALL RESTAURANTS',
+              'EXPLORE ALL',
               style: TextStyle(
-                fontFamily: 'BrandonGrotesque',
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
+                fontFamily: 'Legend',
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
                 letterSpacing: 0.8,
               ),
             ),
@@ -1589,7 +1980,7 @@ ElevatedButton(
     );
   }
 
-  Widget _buildFoodBottomNavItem(
+  Widget _buildEnhancedBottomNavItem(
       IconData icon, String label, bool isActive,
       {VoidCallback? onTap}) {
     return GestureDetector(
@@ -1613,18 +2004,30 @@ ElevatedButton(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: isActive
-                    ? AppTheme.primaryColor
-                    : Colors.grey.withOpacity(0.1),
+                gradient: isActive
+                    ? LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor,
+                          Color(0xFFFFD600),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : LinearGradient(
+                        colors: [
+                          Colors.grey.withOpacity(0.1),
+                          Colors.grey.withOpacity(0.05),
+                        ],
+                      ),
                 shape: BoxShape.circle,
                 boxShadow: isActive
                     ? [
                         BoxShadow(
                           color: AppTheme.primaryColor.withOpacity(0.3),
-                          blurRadius: 10,
+                          blurRadius: 12,
                           spreadRadius: 2,
                         ),
                       ]
@@ -1640,11 +2043,11 @@ ElevatedButton(
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'BrandonGrotesque',
+                fontFamily: 'Legend',
                 fontSize: 11,
                 color: isActive ? AppTheme.primaryColor : Colors.grey[500],
-                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                letterSpacing: 0.5,
+                fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                letterSpacing: 0.4,
               ),
             ),
           ],
@@ -1653,15 +2056,15 @@ ElevatedButton(
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String text, Color color) {
+  Widget _buildEnhancedInfoChip(IconData icon, String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: color.withOpacity(0.2),
-          width: 1.5,
+          width: 1.2,
         ),
       ),
       child: Row(
@@ -1672,14 +2075,18 @@ ElevatedButton(
             size: 16,
             color: color,
           ),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'BrandonGrotesque',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontFamily: 'Legend',
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -1723,4 +2130,25 @@ class CategoryItem {
     required this.tag,
     required this.color,
   });
+}
+
+// Custom clipper for curved header - ADJUSTED for taller curve
+class CurvedHeaderClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 50); // Increased curve height
+    path.quadraticBezierTo(
+      size.width / 2,
+      size.height + 10, // More pronounced curve
+      size.width,
+      size.height - 50, // Increased curve height
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
