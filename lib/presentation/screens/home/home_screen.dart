@@ -1,13 +1,17 @@
+import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kericho_delivery/data/models/merchant_model.dart';
-import 'package:provider/provider.dart';
 import 'package:kericho_delivery/presentation/providers/app_provider.dart';
 import 'package:kericho_delivery/presentation/providers/location_provider.dart';
 import 'package:kericho_delivery/presentation/providers/merchant_provider.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
 import 'package:kericho_delivery/core/theme/app_theme.dart';
-import 'package:carousel_slider/carousel_slider.dart' as carousel_slider;
+import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:cupertino_icons/cupertino_icons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,129 +21,135 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  int _currentCarouselIndex = 0;
   int _selectedCategoryIndex = 0;
-  bool _isRefreshingLocation = false;
+  final ScrollController _scrollController = ScrollController();
+  bool _showSearchBar = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounceTimer;
 
-  final List<CategoryItem> _categories = [
-    CategoryItem(
-      name: 'Fast Food',
-      icon: Icons.fastfood,
-      emoji: '🍔',
-      image: 'assets/images/fast_food.jpg',
-      tag: 'FastFood',
-      color: Color(0xFFFF6B35),
-    ),
-    CategoryItem(
-      name: 'Groceries',
-      icon: Icons.shopping_basket,
-      emoji: '🛒',
-      image: 'assets/images/a776e7d9-d788-4112-810a-dc0945c0071e.jpg',
-      tag: 'Grocery',
-      color: Color(0xFF34C759),
-    ),
-    CategoryItem(
-      name: 'Tea & Coffee',
-      icon: Icons.local_cafe,
-      emoji: '☕',
-      image: 'assets/images/tea.jpg',
-      tag: 'Cafe',
-      color: Color(0xFF8B4513),
-    ),
-    CategoryItem(
-      name: 'Restaurants',
-      icon: Icons.restaurant,
-      emoji: '🍽️',
-      image: 'assets/images/fresh-vegetables-fruit-market-stall.jpg',
-      tag: 'Restaurant',
-      color: Color(0xFFFF9500),
-    ),
-    CategoryItem(
-      name: 'Pharmacy',
-      icon: Icons.local_pharmacy,
-      emoji: '💊',
-      image: 'assets/images/fresh-vegetables-fruit-market-stall.jpg',
-      tag: 'Pharmacy',
-      color: Color(0xFF5856D6),
-    ),
-    CategoryItem(
-      name: 'Bakery',
-      icon: Icons.cake,
-      emoji: '🍰',
-      image: 'assets/images/a776e7d9-d788-4112-810a-dc0945c0071e.jpg',
-      tag: 'Bakery',
-      color: Color(0xFFFFD700),
-    ),
+  // Simplified color palette
+  static const Color kPrimaryColor = Color(0xFF0F766E);
+  static const Color kPrimaryDark = Color(0xFF0F172A);
+  static const Color kBackgroundColor = Color(0xFFF8FAFC);
+  static const Color kCardColor = Colors.white;
+  static const Color kTextPrimary = Color(0xFF0F172A);
+  static const Color kTextSecondary = Color(0xFF64748B);
+  static const Color kBorderColor = Color(0xFFE2E8F0);
+  static const Color kSuccessColor = Color(0xFF10B981);
+  static const Color kWarningColor = Color(0xFFF59E0B);
+  static const Color kErrorColor = Color(0xFFEF4444);
+  static const Color kInfoColor = Color(0xFF3B82F6);
+
+  final List<Map<String, dynamic>> _categories = [
+    {'emoji': '🍽️', 'label': 'All', 'tag': 'All', 'icon': CupertinoIcons.grid},
+    {
+      'emoji': '🍔',
+      'label': 'Fast Food',
+      'tag': 'FastFood',
+      'icon': CupertinoIcons.bag
+    },
+    {
+      'emoji': '🛒',
+      'label': 'Groceries',
+      'tag': 'Grocery',
+      'icon': CupertinoIcons.cart
+    },
+    {
+      'emoji': '☕',
+      'label': 'Coffee',
+      'tag': 'Cafe',
+      'icon': CupertinoIcons.mic
+    },
+    {
+      'emoji': '🍕',
+      'label': 'Restaurant',
+      'tag': 'Restaurant',
+      'icon': CupertinoIcons.house
+    },
+    {
+      'emoji': '💊',
+      'label': 'Pharmacy',
+      'tag': 'Pharmacy',
+      'icon': CupertinoIcons.plus
+    },
+    {
+      'emoji': '🍰',
+      'label': 'Bakery',
+      'tag': 'Bakery',
+      'icon': CupertinoIcons.bag
+    },
+    {
+      'emoji': '🍦',
+      'label': 'Desserts',
+      'tag': 'Dessert',
+      'icon': CupertinoIcons.cube_box
+    },
   ];
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeLocation();
+      _initializeData();
     });
   }
 
-  void _initializeLocation() async {
-    final locationProvider =
-        Provider.of<LocationProvider>(context, listen: false);
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    _searchDebounceTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initializeData() async {
+    final locationProvider = context.read<LocationProvider>();
     if (locationProvider.currentLocation == null) {
       await locationProvider.getCurrentLocation();
     }
   }
 
-  Future<void> _refreshLocation() async {
-    setState(() {
-      _isRefreshingLocation = true;
-    });
-    
-    final locationProvider =
-        Provider.of<LocationProvider>(context, listen: false);
-    
-    try {
-      await locationProvider.getCurrentLocation();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Location updated successfully!',
-            style: TextStyle(
-              fontFamily: 'Legend',
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          backgroundColor: AppTheme.primaryColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to update location: $e',
-            style: TextStyle(
-              fontFamily: 'Legend',
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          backgroundColor: Color(0xFFFF3B30),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    } finally {
-      setState(() {
-        _isRefreshingLocation = false;
-      });
+  void _onScroll() {
+    final offset = _scrollController.offset;
+    if (offset > 60 && !_showSearchBar) {
+      setState(() => _showSearchBar = true);
+    } else if (offset <= 60 && _showSearchBar) {
+      setState(() => _showSearchBar = false);
     }
   }
 
+  void _handleCategorySelected(int index) {
+    setState(() => _selectedCategoryIndex = index);
+    HapticFeedback.lightImpact();
+
+    final category = _categories[index];
+    final merchantProvider = context.read<MerchantProvider>();
+
+    if (category['tag'] == 'All') {
+      merchantProvider.clearCategory();
+    } else {
+      merchantProvider.filterByCategory(category['tag']);
+    }
+  }
+
+  void _handleSearchChanged(String query) {
+    setState(() => _searchQuery = query);
+
+    // Cancel previous timer
+    _searchDebounceTimer?.cancel();
+
+    // Start new timer
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (_searchQuery == query && mounted) {
+        context.read<MerchantProvider>().searchMerchants(query);
+      }
+    });
+  }
+
   void _navigateToMerchant(String merchantId, String merchantName) {
+    HapticFeedback.mediumImpact();
     AppRouter.pushNamed(
       AppRouter.merchant,
       arguments: {
@@ -150,1130 +160,505 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToCart() {
+    HapticFeedback.mediumImpact();
     AppRouter.pushNamed(AppRouter.cart);
   }
 
-  void _navigateToProfile() {
-    AppRouter.pushNamed(AppRouter.profile);
+  void _navigateToNotifications() {
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(CupertinoIcons.bell, color: Colors.grey.shade100),
+            const SizedBox(width: 12),
+            Text(
+              'Notifications coming soon!',
+              style: GoogleFonts.afacad(color: Colors.white),
+            ),
+          ],
+        ),
+        backgroundColor: kInfoColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
-  void _navigateToOrderHistory() {
-    if (AppRouter.orderHistory != null) {
-      AppRouter.pushNamed(AppRouter.orderHistory!);
+  Future<void> _refreshLocation() async {
+    HapticFeedback.lightImpact();
+    try {
+      await context.read<LocationProvider>().getCurrentLocation();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(CupertinoIcons.location, color: Colors.grey.shade100),
+                const SizedBox(width: 12),
+                Text(
+                  'Location updated!',
+                  style: GoogleFonts.afacad(color: Colors.white),
+                ),
+              ],
+            ),
+            backgroundColor: kSuccessColor,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(CupertinoIcons.exclamationmark_circle,
+                    color: Colors.grey.shade100),
+                const SizedBox(width: 12),
+                Text(
+                  'Location update failed',
+                  style: GoogleFonts.afacad(color: Colors.white),
+                ),
+              ],
+            ),
+            backgroundColor: kErrorColor,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appProvider = Provider.of<AppProvider>(context);
-    final locationProvider = Provider.of<LocationProvider>(context);
-    final merchantProvider = Provider.of<MerchantProvider>(context);
-
     return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: kBackgroundColor,
+      body: Consumer3<LocationProvider, AppProvider, MerchantProvider>(
+        builder: (context, locationProvider, appProvider, merchantProvider, _) {
+          return Stack(
             children: [
-              // TALLER Curved Header with Enhanced Location
-              Stack(
+              // Main content
+              Column(
                 children: [
-                  // TALLER Curved Background Image - INCREASED HEIGHT
-                  ClipPath(
-                    clipper: CurvedHeaderClipper(),
-                    child: Container(
-                      height: 280, // INCREASED from 240 to 280
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/images/fast_food.jpg'),
-                          fit: BoxFit.cover,
-                          colorFilter: ColorFilter.mode(
-                            Colors.black.withOpacity(0.6),
-                            BlendMode.darken,
+                  const SizedBox(height: 200), // Reserve space for header
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        await _refreshLocation();
+                        // Reload merchants if needed
+                      },
+                      color: kPrimaryColor,
+                      child: CustomScrollView(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        slivers: [
+                          // Categories Section
+                          SliverToBoxAdapter(
+                            child: _buildCategoriesSection(),
                           ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  // Content Overlay
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20), // Increased vertical padding
-                    child: Column(
-                      children: [
-                        // Enhanced App Bar with Location
-                        Row(
-                          children: [
-                            // Location with Enhanced Features
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: _refreshLocation,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 14), // Increased vertical padding
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.4),
-                                      width: 1.5,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 15,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Stack(
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: Colors.white,
-                                            size: 22, // Slightly larger icon
-                                          ),
-                                          if (_isRefreshingLocation)
-                                            Positioned(
-                                              right: 0,
-                                              top: 0,
-                                              child: Container(
-                                                width: 8,
-                                                height: 8,
-                                                decoration: BoxDecoration(
-                                                  color: AppTheme.primaryColor,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  '📍 DELIVERING TO',
-                                                  style: TextStyle(
-                                                    fontFamily: 'Legend',
-                                                    fontSize: 11, // Slightly larger
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.white.withOpacity(0.9),
-                                                    letterSpacing: 1.0,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 6),
-                                                // Check if location is accurate
-                                                if (_isRefreshingLocation == false && 
-                                                    locationProvider.currentLocation != null)
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(
-                                                        horizontal: 8, vertical: 3), // Slightly larger
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFF34C759).withOpacity(0.8),
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    child: Text(
-                                                      'ACTIVE',
-                                                      style: TextStyle(
-                                                        fontFamily: 'Legend',
-                                                        fontSize: 9, // Slightly larger
-                                                        fontWeight: FontWeight.w700,
-                                                        color: Colors.white,
-                                                        letterSpacing: 0.8,
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 6), // Increased spacing
-                                            Text(
-                                              locationProvider.currentLocation?.address ??
-                                                  'Kericho, Kenya',
-                                              style: TextStyle(
-                                                fontFamily: 'Legend',
-                                                fontSize: 16, // Increased from 14
-                                                fontWeight: FontWeight.w800,
-                                                color: Colors.white,
-                                                letterSpacing: 0.2,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4), // Increased spacing
-                                            Text(
-                                              'Tap to refresh location',
-                                              style: TextStyle(
-                                                fontFamily: 'Legend',
-                                                fontSize: 11, // Slightly larger
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.white.withOpacity(0.8),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (!_isRefreshingLocation)
-                                        Icon(
-                                          Icons.refresh,
-                                          color: Colors.white.withOpacity(0.8),
-                                          size: 20, // Slightly larger
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+
+                          // Featured Merchants Section
+                          if (merchantProvider
+                              .getFeaturedMerchants()
+                              .isNotEmpty)
+                            SliverToBoxAdapter(
+                              child: _buildFeaturedSection(merchantProvider),
                             ),
 
-                            const SizedBox(width: 12),
-
-                            // Enhanced Action Buttons
-                            Row(
-                              children: [
-                                // Notification Bell
-                                Container(
-                                  width: 46, // Increased size
-                                  height: 46, // Increased size
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(14), // Slightly larger
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.4),
-                                      width: 1.5,
+                          // Near You Section Header
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 28, 20, 16),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Near You',
+                                    style: GoogleFonts.afacad(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      color: kTextPrimary,
+                                      letterSpacing: -0.3,
                                     ),
                                   ),
-                                  child: Stack(
-                                    children: [
-                                      Center(
-                                        child: Icon(
-                                          Icons.notifications_outlined,
-                                          color: Colors.white,
-                                          size: 22, // Slightly larger
-                                        ),
-                                      ),
-                                      Positioned(
-                                        right: 7,
-                                        top: 7,
-                                        child: Container(
-                                          width: 9, // Slightly larger
-                                          height: 9, // Slightly larger
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFFFF3B30),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(width: 12),
-
-                                // Cart Button
-                                Stack(
-                                  children: [
-                                    Container(
-                                      width: 46, // Increased size
-                                      height: 46, // Increased size
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(14), // Slightly larger
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.4),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.shopping_bag_outlined,
-                                          color: Colors.white,
-                                          size: 22, // Slightly larger
-                                        ),
-                                        onPressed: _navigateToCart,
-                                      ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
                                     ),
-                                    if (appProvider.cartItemCount > 0)
-                                      Positioned(
-                                        right: -2,
-                                        top: -2,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(5), // Slightly larger
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFFFF3B30),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 2,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.red.withOpacity(0.3),
-                                                blurRadius: 6,
-                                                spreadRadius: 1,
-                                              ),
-                                            ],
-                                          ),
-                                          child: Text(
-                                            appProvider.cartItemCount > 9
-                                                ? '9+'
-                                                : appProvider.cartItemCount.toString(),
-                                            style: TextStyle(
-                                              fontFamily: 'Legend',
-                                              fontSize: 9, // Slightly larger
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 32), // Increased spacing
-
-                        // Welcome Section - ENHANCED for taller header
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: 'HELLO, ',
-                                            style: TextStyle(
-                                              fontFamily: 'Legend',
-                                              fontSize: 30, // Increased from 26
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white,
-                                              letterSpacing: 0.6,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Colors.black.withOpacity(0.4),
-                                                  blurRadius: 15,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: appProvider.user?.fullName
-                                                        ?.split(' ')
-                                                        .first
-                                                        .toUpperCase() ??
-                                                'FOODIE',
-                                            style: TextStyle(
-                                              fontFamily: 'Legend',
-                                              fontSize: 30, // Increased from 26
-                                              fontWeight: FontWeight.w900,
-                                              color: Color(0xFFFFD600),
-                                              letterSpacing: 0.6,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Colors.black.withOpacity(0.4),
-                                                  blurRadius: 15,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: '!',
-                                            style: TextStyle(
-                                              fontFamily: 'Legend',
-                                              fontSize: 30, // Increased from 26
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white,
-                                              letterSpacing: 0.6,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    decoration: BoxDecoration(
+                                      color: kPrimaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
-                                    const SizedBox(height: 10), // Increased spacing
-                                    Row(
+                                    child: Row(
                                       children: [
-                                        Icon(
-                                          Icons.star,
-                                          size: 16, // Slightly larger
-                                          color: Color(0xFFFFD600),
-                                        ),
+                                        Icon(CupertinoIcons.shopping_cart,
+                                            size: 14, color: kPrimaryColor),
                                         const SizedBox(width: 6),
                                         Text(
-                                          'Premium Member',
-                                          style: TextStyle(
-                                            fontFamily: 'Legend',
-                                            fontSize: 14, // Increased from 12
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white.withOpacity(0.9),
-                                            letterSpacing: 0.2,
+                                          '${merchantProvider.merchants.length} stores',
+                                          style: GoogleFonts.afacad(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: kPrimaryColor,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 8), // Increased spacing
-                                    Text(
-                                      '🍕 What delicious meal are you craving today? 🍔',
-                                      style: TextStyle(
-                                        fontFamily: 'Legend',
-                                        fontSize: 14, // Increased from 12
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white.withOpacity(0.9),
-                                        letterSpacing: 0.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                width: 80, // Increased from 65
-                                height: 80, // Increased from 65
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.25),
-                                  borderRadius: BorderRadius.circular(22), // Slightly larger
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.4),
-                                    width: 2.5, // Thicker border
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.3),
-                                      blurRadius: 15,
-                                      spreadRadius: 3,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.local_pizza,
-                                  color: Colors.white,
-                                  size: 38, // Larger icon
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Merchants Grid/List
+                          if (merchantProvider.isLoading)
+                            SliverToBoxAdapter(child: _buildLoadingState())
+                          else if (merchantProvider.merchants.isEmpty)
+                            SliverToBoxAdapter(child: _buildEmptyState())
+                          else
+                            SliverPadding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final merchant =
+                                        merchantProvider.merchants[index];
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 16),
+                                      child: _buildMerchantCard(merchant),
+                                    );
+                                  },
+                                  childCount: merchantProvider.merchants.length,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+
+                          const SliverToBoxAdapter(
+                              child: SizedBox(height: 100)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
 
-              // Search Bar with Enhanced Design - ADJUSTED MARGIN
-              Padding(
-                padding: const EdgeInsets.only(
-                    left: 20, right: 20, top: 30, bottom: 8), // Increased top margin
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.12),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: '🔍 Search restaurants, groceries, pizza...',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Legend',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[500],
-                        letterSpacing: 0.2,
-                      ),
-                      prefixIcon: Container(
-                        margin: const EdgeInsets.only(left: 12),
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: AppTheme.primaryColor,
-                          size: 22,
+              // Curved Header
+              _buildCurvedHeader(locationProvider, appProvider),
+            ],
+          );
+        },
+      ),
+
+      // Bottom Navigation Bar
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  // ==================== CURVED HEADER ====================
+  Widget _buildCurvedHeader(
+      LocationProvider locationProvider, AppProvider appProvider) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: ClipPath(
+        clipper: HeaderCurveClipper(),
+        child: Container(
+          height: 220,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                kPrimaryDark,
+                Color(0xFF1E293B),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  // Top Bar
+                  Row(
+                    children: [
+                      if (_showSearchBar) ...[
+                        IconButton(
+                          icon: Icon(
+                            CupertinoIcons.arrow_left,
+                            color: Colors.white70,
+                            size: 24,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                              _showSearchBar = false;
+                            });
+                            FocusScope.of(context).unfocus();
+                          },
+                        ),
+                        const SizedBox(width: 4),
+                      ] else
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
+                            style: GoogleFonts.afacad(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      Expanded(
+                        child: AnimatedOpacity(
+                          opacity: _showSearchBar ? 1 : 0,
+                          duration: const Duration(milliseconds: 280),
+                          child: _showSearchBar
+                              ? _buildSearchField()
+                              : const SizedBox.shrink(),
                         ),
                       ),
-                      suffixIcon: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      if (!_showSearchBar) ...[
+                        IconButton(
+                          icon: Icon(
+                            CupertinoIcons.bell,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          onPressed: _navigateToNotifications,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      _buildCartButton(appProvider),
+                    ],
+                  ),
+                  if (!_showSearchBar) ...[
+                    const Spacer(flex: 1),
+                    // Location Section
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.qr_code_scanner_rounded,
-                                color: AppTheme.primaryColor,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                // TODO: Open QR Scanner
-                              },
+                            Icon(
+                              CupertinoIcons.location_solid,
+                              color: Colors.white.withOpacity(0.8),
+                              size: 18,
                             ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.tune_rounded,
-                                color: AppTheme.primaryColor,
-                                size: 20,
+                            const SizedBox(width: 6),
+                            Text(
+                              'Current Location',
+                              style: GoogleFonts.afacad(
+                                color: Colors.white70,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w500,
                               ),
-                              onPressed: () {
-                                // TODO: Open filters
-                              },
                             ),
                           ],
                         ),
-                      ),
-                      border: InputBorder.none,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 16,
-                      ),
-                    ),
-                    style: TextStyle(
-                      fontFamily: 'Legend',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
-                    onChanged: (value) {
-                      merchantProvider.searchMerchants(value);
-                    },
-                  ),
-                ),
-              ),
-
-              // Quick Action Chips
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: SizedBox(
-                  height: 36,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _buildQuickActionChip('🚚 Free Delivery', Icons.local_shipping),
-                      const SizedBox(width: 8),
-                      _buildQuickActionChip('⭐ Top Rated', Icons.star),
-                      const SizedBox(width: 8),
-                      _buildQuickActionChip('⚡ Fast', Icons.flash_on),
-                      const SizedBox(width: 8),
-                      _buildQuickActionChip('💳 Pay', Icons.credit_card),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Food Promo Carousel
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  children: [
-                    carousel_slider.CarouselSlider(
-                      options: carousel_slider.CarouselOptions(
-                        height: 160,
-                        viewportFraction: 0.88,
-                        autoPlay: true,
-                        autoPlayInterval: const Duration(seconds: 6),
-                        autoPlayCurve: Curves.fastOutSlowIn,
-                        onPageChanged: (index, reason) {
-                          setState(() => _currentCarouselIndex = index);
-                        },
-                      ),
-                      items: [
-                        _buildFoodPromoCard(
-                          '🎉 FREE DELIVERY',
-                          'First order • Use code: WELCOME50',
-                          Color(0xFFFF6B35),
-                          Icons.local_shipping,
-                        ),
-                        _buildFoodPromoCard(
-                          '🍕 30% OFF PIZZA',
-                          'Order above KSh 500 • Until Friday',
-                          Color(0xFF5856D6),
-                          Icons.local_pizza,
-                        ),
-                        _buildFoodPromoCard(
-                          '☕ BUY 1 GET 1',
-                          'Kericho Tea • All day offer',
-                          AppTheme.primaryColor,
-                          Icons.local_cafe,
-                        ),
-                      ],
-                    ),
-
-                    // Enhanced Carousel Indicators
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [0, 1, 2].map((index) {
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: _currentCarouselIndex == index ? 28 : 10,
-                          height: 6,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            gradient: _currentCarouselIndex == index
-                                ? LinearGradient(
-                                    colors: [
-                                      AppTheme.primaryColor,
-                                      Color(0xFFFFD600),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  )
-                                : LinearGradient(
-                                    colors: [
-                                      Colors.grey[300]!,
-                                      Colors.grey[400]!,
-                                    ],
-                                  ),
-                            boxShadow: _currentCarouselIndex == index
-                                ? [
-                                    BoxShadow(
-                                      color: AppTheme.primaryColor.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Food Categories
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '🍴 CATEGORIES',
-                          style: TextStyle(
-                            fontFamily: 'Legend',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.grey[900],
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                        const Spacer(),
+                        const SizedBox(height: 8),
                         GestureDetector(
-                          onTap: () {
-                            // TODO: View all categories
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppTheme.primaryColor.withOpacity(0.1),
-                                  Color(0xFF34C759).withOpacity(0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'VIEW ALL',
-                                  style: TextStyle(
-                                    fontFamily: 'Legend',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.primaryColor,
-                                    letterSpacing: 0.6,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 12,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 140,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        children: _categories.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final category = entry.value;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedCategoryIndex = index;
-                              });
-                              merchantProvider.filterByCategory(category.tag);
-                            },
-                            child: Container(
-                              width: 120,
-                              margin: EdgeInsets.only(
-                                right: index == _categories.length - 1 ? 0 : 15,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                        _selectedCategoryIndex == index
-                                            ? 0.2
-                                            : 0.1),
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: Stack(
-                                  children: [
-                                    // Background with Gradient
-                                    Positioned.fill(
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              category.color.withOpacity(0.9),
-                                              category.color.withOpacity(0.7),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Image Overlay
-                                    Positioned.fill(
-                                      child: Opacity(
-                                        opacity: 0.15,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            image: DecorationImage(
-                                              image: AssetImage(category.image),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Content
-                                    Positioned.fill(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              Colors.transparent,
-                                              Colors.black.withOpacity(0.4),
-                                            ],
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Container(
-                                              width: 45,
-                                              height: 45,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white
-                                                    .withOpacity(0.25),
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                                border: Border.all(
-                                                  color: Colors.white
-                                                      .withOpacity(0.4),
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  category.emoji,
-                                                  style: TextStyle(
-                                                    fontSize: 26,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  category.name,
-                                                  style: TextStyle(
-                                                    fontFamily:
-                                                        'Legend',
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w900,
-                                                    color: Colors.white,
-                                                    letterSpacing: 0.4,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  'Discover →',
-                                                  style: TextStyle(
-                                                    fontFamily:
-                                                        'Legend',
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white
-                                                        .withOpacity(0.9),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Selection Effect
-                                    if (_selectedCategoryIndex == index)
-                                      Positioned.fill(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 3,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.white
-                                                    .withOpacity(0.3),
-                                                blurRadius: 15,
-                                                spreadRadius: 3,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Featured Restaurants with Enhanced Design
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '⭐ FEATURED',
-                          style: TextStyle(
-                            fontFamily: 'Legend',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.grey[900],
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppTheme.primaryColor,
-                                Color(0xFFFFD600),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                          onTap: _refreshLocation,
                           child: Row(
                             children: [
-                              Text(
-                                'VIEW ALL',
-                                style: TextStyle(
-                                  fontFamily: 'Legend',
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 11,
-                                  letterSpacing: 0.6,
+                              Flexible(
+                                child: Text(
+                                  locationProvider.currentLocation?.address ??
+                                      'Kericho, Kenya',
+                                  style: GoogleFonts.afacad(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 8),
                               Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 14,
+                                CupertinoIcons.chevron_down,
+                                color: Colors.white.withOpacity(0.7),
+                                size: 24,
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ...merchantProvider.getFeaturedMerchants().map((merchant) {
-                      return _buildFoodMerchantCard(merchant);
-                    }),
-                  ],
-                ),
-              ),
-
-              // All Restaurants by Category
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '🍽️ NEAR YOU',
-                          style: TextStyle(
-                            fontFamily: 'Legend',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.grey[900],
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AppTheme.primaryColor.withOpacity(0.2),
-                              width: 1.2,
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              CupertinoIcons.bag_fill,
+                              color: Colors.white.withOpacity(0.7),
+                              size: 16,
                             ),
-                          ),
-                          child: Text(
-                            '${merchantProvider.merchants.length} SHOPS',
-                            style: TextStyle(
-                              fontFamily: 'Legend',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor,
-                              letterSpacing: 0.6,
+                            const SizedBox(width: 6),
+                            Text(
+                              'Fast delivery • 20-30 min',
+                              style: GoogleFonts.afacad(
+                                color: Colors.white70,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // Enhanced Category Filter
-                    SizedBox(
-                      height: 55,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        children: merchantProvider.categories.map((category) {
-                          final icon = _getCategoryIcon(category);
-                          final isSelected =
-                              merchantProvider.selectedCategory == category;
-                          return GestureDetector(
-                            onTap: () {
-                              merchantProvider.filterByCategory(category);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 10),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 12),
-                              decoration: BoxDecoration(
-                                gradient: isSelected
-                                    ? LinearGradient(
-                                        colors: [
-                                          AppTheme.primaryColor,
-                                          Color(0xFFFFD600),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      )
-                                    : LinearGradient(
-                                        colors: [
-                                          Colors.white,
-                                          Colors.grey[50]!,
-                                        ],
-                                      ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                        isSelected ? 0.15 : 0.06),
-                                    blurRadius: 12,
-                                    spreadRadius: 1,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppTheme.primaryColor.withOpacity(0.2)
-                                      : Colors.grey[200]!,
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    icon,
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    category.toUpperCase(),
-                                    style: TextStyle(
-                                      fontFamily: 'Legend',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.grey[700],
-                                      letterSpacing: 0.4,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Merchant List
-                    merchantProvider.isLoading
-                        ? _buildFoodLoadingState()
-                        : merchantProvider.merchants.isEmpty
-                            ? _buildFoodEmptyState()
-                            : Column(
-                                children:
-                                    merchantProvider.merchants.map((merchant) {
-                                  return _buildFoodMerchantCard(merchant);
-                                }).toList(),
-                              ),
+                    const Spacer(flex: 2),
                   ],
-                ),
+                ],
               ),
-
-              const SizedBox(height: 100),
-            ],
-          ),
-        ),
-      ),
-
-      // Enhanced Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 25,
-              spreadRadius: 3,
-              offset: const Offset(0, -8),
             ),
-          ],
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(25),
-            topRight: Radius.circular(25),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildEnhancedBottomNavItem(Icons.home_filled, 'Home', true),
-            _buildEnhancedBottomNavItem(Icons.history, 'Orders', false,
-                onTap: _navigateToOrderHistory),
-            _buildEnhancedBottomNavItem(Icons.explore, 'Explore', false),
-            _buildEnhancedBottomNavItem(Icons.person, 'Profile', false,
-                onTap: _navigateToProfile),
-          ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickActionChip(String text, IconData icon) {
+  Widget _buildSearchField() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      height: 48,
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.2),
-          width: 1.2,
+          color: Colors.white.withOpacity(0.12),
+          width: 1,
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
+          const SizedBox(width: 12),
           Icon(
-            icon,
-            size: 14,
-            color: AppTheme.primaryColor,
+            CupertinoIcons.search,
+            color: Colors.white.withOpacity(0.8),
+            size: 22,
           ),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Legend',
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _handleSearchChanged,
+              style: GoogleFonts.afacad(color: Colors.white, fontSize: 15),
+              decoration: InputDecoration(
+                hintText: 'Search for "Grocery"...',
+                hintStyle: GoogleFonts.afacad(
+                  color: Colors.white60,
+                  fontSize: 15,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+          if (_searchQuery.isNotEmpty)
+            IconButton(
+              icon: Icon(
+                CupertinoIcons.xmark,
+                color: Colors.white.withOpacity(0.7),
+                size: 20,
+              ),
+              onPressed: () {
+                _searchController.clear();
+                _handleSearchChanged('');
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartButton(AppProvider appProvider) {
+    return Stack(
+      children: [
+        IconButton(
+          icon: Icon(
+            CupertinoIcons.cart,
+            color: Colors.white,
+            size: 26,
+          ),
+          onPressed: _navigateToCart,
+        ),
+        if (appProvider.cartItemCount > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: const BoxDecoration(
+                color: kErrorColor,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              child: Center(
+                child: Text(
+                  appProvider.cartItemCount > 9
+                      ? '9+'
+                      : '${appProvider.cartItemCount}',
+                  style: GoogleFonts.afacad(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ==================== CATEGORIES SECTION ====================
+  Widget _buildCategoriesSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 110,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final isSelected = index == _selectedCategoryIndex;
+                return Padding(
+                  padding: EdgeInsets.only(
+                    right: index < _categories.length - 1 ? 16 : 0,
+                  ),
+                  child: _buildCategoryCard(category, isSelected, index),
+                );
+              },
             ),
           ),
         ],
@@ -1281,558 +666,225 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFoodPromoCard(
-      String title, String subtitle, Color color, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color,
-            color.withOpacity(0.8),
+  Widget _buildCategoryCard(
+    Map<String, dynamic> category,
+    bool isSelected,
+    int index,
+  ) {
+    return GestureDetector(
+      onTap: () => _handleCategorySelected(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: Column(
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: kCardColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? kSuccessColor : kBorderColor,
+                  width: isSelected ? 3 : 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isSelected
+                        ? kSuccessColor.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.04),
+                    blurRadius: isSelected ? 12 : 8,
+                    offset: Offset(0, isSelected ? 4 : 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  category['emoji'],
+                  style: const TextStyle(fontSize: 38),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 76,
+              child: Text(
+                category['label'],
+                style: GoogleFonts.afacad(
+                  fontSize: 13.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? kPrimaryColor : kTextSecondary,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.4),
-            blurRadius: 25,
-            spreadRadius: 3,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+    );
+  }
+
+  // ==================== FEATURED SECTION ====================
+  Widget _buildFeaturedSection(MerchantProvider merchantProvider) {
+    final featuredMerchants = merchantProvider.getFeaturedMerchants();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
+                  Icon(CupertinoIcons.star_fill,
+                      color: kWarningColor, size: 20),
+                  const SizedBox(width: 8),
                   Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'Legend',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 0.4,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontFamily: 'Legend',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withOpacity(0.9),
-                      letterSpacing: 0.2,
+                    'Featured',
+                    style: GoogleFonts.afacad(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: kTextPrimary,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ],
               ),
-            ),
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
-                  width: 2,
+              TextButton(
+                onPressed: () {
+                  // Navigate to all featured
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      'See all',
+                      style: GoogleFonts.afacad(
+                        color: kErrorColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      CupertinoIcons.arrow_right,
+                      color: kErrorColor,
+                      size: 18,
+                    ),
+                  ],
                 ),
               ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: Colors.white,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+        SizedBox(
+          height: 240,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            physics: const BouncingScrollPhysics(),
+            itemCount: featuredMerchants.length,
+            itemBuilder: (context, index) {
+              final merchant = featuredMerchants[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: index < featuredMerchants.length - 1 ? 14 : 0,
+                ),
+                child: _buildFeaturedMerchantCard(merchant),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildFoodMerchantCard(MerchantModel merchant) {
+  Widget _buildFeaturedMerchantCard(MerchantModel merchant) {
     return GestureDetector(
       onTap: () => _navigateToMerchant(merchant.id, merchant.name),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
+        width: 190,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
+          color: kCardColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: kBorderColor, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              spreadRadius: 2,
-              offset: const Offset(0, 8),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Merchant Image with Enhanced Badges
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
-                  ),
-                  child: Container(
-                    height: 180,
-                    width: double.infinity,
-                    color: Colors.grey[200],
-                    child: merchant.imageUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: merchant.imageUrl!,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.grey[200]!,
-                                    Colors.grey[300]!,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.grey[200]!,
-                                    Colors.grey[300]!,
-                                  ],
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.restaurant,
-                                size: 60,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          )
-                        : Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.grey[200]!,
-                                  Colors.grey[300]!,
-                                ],
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.restaurant,
-                              size: 60,
-                              color: Colors.grey,
-                            ),
-                          ),
-                  ),
-                ),
-
-                // Gradient Overlay
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(25),
-                        topRight: Radius.circular(25),
-                      ),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.4),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Status Badge
-                Positioned(
-                  top: 16,
-                  left: 16,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: merchant.isOpen
-                          ? LinearGradient(
-                              colors: [
-                                Color(0xFF34C759),
-                                Color(0xFF2ECC71),
-                              ],
-                            )
-                          : LinearGradient(
-                              colors: [
-                                Color(0xFFFF3B30),
-                                Color(0xFFFF6B6B),
-                              ],
-                            ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.25),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          merchant.isOpen
-                              ? Icons.check_circle
-                              : Icons.cancel_rounded,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          merchant.isOpen ? 'OPEN' : 'CLOSED',
-                          style: TextStyle(
-                            fontFamily: 'Legend',
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Featured Badge
-                if (merchant.isFeatured)
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0xFFFFD600),
-                            Color(0xFFFF9500),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.orange.withOpacity(0.3),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.star_rounded,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'FEATURED',
-                            style: TextStyle(
-                              fontFamily: 'Legend',
-                              fontSize: 11,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // Bottom Info Bar
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Rating
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.star_rounded,
-                              size: 16,
-                              color: Color(0xFFFF9500),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              merchant.rating.toStringAsFixed(1),
-                              style: TextStyle(
-                                fontFamily: 'Legend',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.grey[900],
-                              ),
-                            ),
-                            Text(
-                              ' (${merchant.ratingCount})',
-                              style: TextStyle(
-                                fontFamily: 'Legend',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Delivery Info
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.primaryColor,
-                              Color(0xFF34C759),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delivery_dining_rounded,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${merchant.deliveryTime} MIN',
-                              style: TextStyle(
-                                fontFamily: 'Legend',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            // Merchant Details
+            _buildMerchantImage(merchant, height: 120, radius: 18),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    merchant.name,
+                    style: GoogleFonts.afacad(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: kTextPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              merchant.name.toUpperCase(),
-                              style: TextStyle(
-                                fontFamily: 'Legend',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.grey[900],
-                                letterSpacing: 0.4,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  size: 14,
-                                  color: AppTheme.primaryColor,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    'Kericho, Kenya',
-                                    style: TextStyle(
-                                      fontFamily: 'Legend',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey[600],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                      Icon(
+                        CupertinoIcons.star_fill,
+                        size: 16,
+                        color: kWarningColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        merchant.rating.toStringAsFixed(1),
+                        style: GoogleFonts.afacad(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: kTextPrimary,
                         ),
                       ),
-                      // Favorite Button
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Provider.of<AppProvider>(context)
-                                  .isFavorite(merchant.id)
-                              ? Color(0xFFFF3B30).withOpacity(0.1)
-                              : Colors.grey[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.grey[200]!,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Provider.of<AppProvider>(context)
-                                    .isFavorite(merchant.id)
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            color: Provider.of<AppProvider>(context)
-                                    .isFavorite(merchant.id)
-                                ? Color(0xFFFF3B30)
-                                : Colors.grey[400],
-                            size: 22,
-                          ),
-                          onPressed: () {
-                            Provider.of<AppProvider>(context, listen: false)
-                                .toggleFavorite(merchant);
-                          },
+                      Text(
+                        ' • ${merchant.deliveryTime} min',
+                        style: GoogleFonts.afacad(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: kTextSecondary,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 10),
-
-                  Text(
-                    merchant.description,
-                    style: TextStyle(
-                      fontFamily: 'Legend',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
-                      height: 1.5,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Food Tags
-                  if (merchant.tags != null && merchant.tags!.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: merchant.tags!.map((tag) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: AppTheme.primaryColor.withOpacity(0.2),
-                              width: 1.2,
-                            ),
-                          ),
-                          child: Text(
-                            '#${tag.toUpperCase()}',
-                            style: TextStyle(
-                              fontFamily: 'Legend',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                  // Additional Info - FIXED OVERFLOW
-                  const SizedBox(height: 16),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildEnhancedInfoChip(
-                          Icons.monetization_on_rounded,
-                          'Delivery: KSh ${merchant.deliveryFee.toInt()}',
-                          Color(0xFF34C759),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.car_detailed,
+                        size: 16,
+                        color: kSuccessColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        merchant.deliveryFee == 0
+                            ? 'Free delivery'
+                            : 'KSh ${merchant.deliveryFee.toInt()}',
+                        style: GoogleFonts.afacad(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: kSuccessColor,
                         ),
-                        const SizedBox(width: 12),
-                        _buildEnhancedInfoChip(
-                          Icons.shopping_bag_rounded,
-                          'Min: KSh ${merchant.minimumOrder?.toInt() ?? 0}',
-                          Color(0xFF5856D6),
-                        ),
-                        const SizedBox(width: 12),
-                        _buildEnhancedInfoChip(
-                          Icons.phone,
-                          'Call Now',
-                          Color(0xFFFF9500),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1843,250 +895,139 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFoodLoadingState() {
-    return Container(
-      padding: const EdgeInsets.all(50),
-      child: Column(
-        children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryColor,
-                  Color(0xFFFFD600),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 3,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '🍳 PREPARING YOUR FOOD OPTIONS...',
-            style: TextStyle(
-              fontFamily: 'Legend',
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: Colors.grey[800],
-              letterSpacing: 0.8,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Fresh meals are being prepared!',
-            style: TextStyle(
-              fontFamily: 'Legend',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-              letterSpacing: 0.2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFoodEmptyState() {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      child: Column(
-        children: [
-          Container(
-            width: 140,
-            height: 140,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.grey[100]!,
-                  Colors.grey[200]!,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '🍕',
-                style: TextStyle(fontSize: 70),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'NO RESTAURANTS FOUND',
-            style: TextStyle(
-              fontFamily: 'Legend',
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: Colors.grey[900],
-              letterSpacing: 0.8,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Try adjusting your search or explore different categories',
-            style: TextStyle(
-              fontFamily: 'Legend',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-              letterSpacing: 0.2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Provider.of<MerchantProvider>(context, listen: false)
-                  .clearCategory();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 25, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              elevation: 6,
-              shadowColor: AppTheme.primaryColor.withOpacity(0.3),
-            ),
-            child: Text(
-              'EXPLORE ALL',
-              style: TextStyle(
-                fontFamily: 'Legend',
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEnhancedBottomNavItem(
-      IconData icon, String label, bool isActive,
-      {VoidCallback? onTap}) {
+  // ==================== MERCHANT CARD ====================
+  Widget _buildMerchantCard(MerchantModel merchant) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => _navigateToMerchant(merchant.id, merchant.name),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         decoration: BoxDecoration(
-          gradient: isActive
-              ? LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor.withOpacity(0.15),
-                    AppTheme.primaryColor.withOpacity(0.05),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
-              : null,
-          borderRadius: BorderRadius.circular(20),
+          color: kCardColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: kBorderColor, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                gradient: isActive
-                    ? LinearGradient(
-                        colors: [
-                          AppTheme.primaryColor,
-                          Color(0xFFFFD600),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : LinearGradient(
-                        colors: [
-                          Colors.grey.withOpacity(0.1),
-                          Colors.grey.withOpacity(0.05),
-                        ],
-                      ),
-                shape: BoxShape.circle,
-                boxShadow: isActive
-                    ? [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.3),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Icon(
-                icon,
-                color: isActive ? Colors.white : Colors.grey[500],
-                size: 22,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Legend',
-                fontSize: 11,
-                color: isActive ? AppTheme.primaryColor : Colors.grey[500],
-                fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
-            ),
+            _buildMerchantImage(merchant),
+            _buildMerchantDetails(merchant),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEnhancedInfoChip(IconData icon, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1.2,
+  Widget _buildMerchantImage(
+    MerchantModel merchant, {
+    double height = 160,
+    double radius = 18,
+  }) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
+          child: Container(
+            height: height,
+            width: double.infinity,
+            color: Colors.grey[100],
+            child: merchant.imageUrl != null
+                ? (merchant.imageUrl!.startsWith('http')
+                    ? CachedNetworkImage(
+                        imageUrl: merchant.imageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => _buildImagePlaceholder(),
+                        errorWidget: (context, url, error) =>
+                            _buildImagePlaceholder(),
+                      )
+                    : Image.asset(
+                        merchant.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildImagePlaceholder(),
+                      ))
+                : _buildImagePlaceholder(),
+          ),
         ),
+        Positioned(
+          top: 12,
+          left: 12,
+          child: _buildStatusBadge(merchant.isOpen),
+        ),
+        if (merchant.deliveryFee == 0)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: kSuccessColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.car_detailed,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Free delivery',
+                    style: GoogleFonts.afacad(
+                      fontSize: 11,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      color: Colors.grey[100],
+      child: Center(
+        child: Icon(
+          CupertinoIcons.building_2_fill,
+          size: 48,
+          color: Colors.grey[300],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(bool isOpen) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isOpen ? kSuccessColor : kErrorColor,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            icon,
-            size: 16,
-            color: color,
+            isOpen ? CupertinoIcons.circle_fill : CupertinoIcons.circle,
+            size: 10,
+            color: Colors.white,
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontFamily: 'Legend',
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: color,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          const SizedBox(width: 6),
+          Text(
+            isOpen ? 'OPEN' : 'CLOSED',
+            style: GoogleFonts.afacad(
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -2094,56 +1035,332 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'fastfood':
-        return '🍔';
-      case 'grocery':
-        return '🛒';
-      case 'cafe':
-        return '☕';
-      case 'restaurant':
-        return '🍽️';
-      case 'pharmacy':
-        return '💊';
-      case 'bakery':
-        return '🍰';
-      default:
-        return '🏪';
-    }
+  Widget _buildMerchantDetails(MerchantModel merchant) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  merchant.name,
+                  style: GoogleFonts.afacad(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: kTextPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: kWarningColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.star_fill,
+                      size: 14,
+                      color: kWarningColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      merchant.rating.toStringAsFixed(1),
+                      style: GoogleFonts.afacad(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: kWarningColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            merchant.description,
+            style: GoogleFonts.afacad(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: kTextSecondary,
+              height: 1.4,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildInfoChip(
+                '${merchant.deliveryTime} min',
+                CupertinoIcons.clock,
+              ),
+              const SizedBox(width: 8),
+              _buildInfoChip(
+                merchant.deliveryFee == 0
+                    ? 'Free'
+                    : 'KSh ${merchant.deliveryFee.toInt()}',
+                CupertinoIcons.car_detailed,
+              ),
+              const SizedBox(width: 8),
+              _buildInfoChip(
+                'Min ${merchant.minimumOrder?.toInt() ?? 0}',
+                CupertinoIcons.bag,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(String text, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: kBackgroundColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: kBorderColor, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: kTextSecondary),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                text,
+                style: GoogleFonts.afacad(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: kTextSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==================== STATE WIDGETS ====================
+  Widget _buildLoadingState() {
+    return Container(
+      padding: const EdgeInsets.all(60),
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: kPrimaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation(kPrimaryColor),
+                strokeWidth: 3,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Finding stores near you...',
+            style: GoogleFonts.afacad(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: kTextPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: kCardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: kBorderColor),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(
+              color: kBackgroundColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              CupertinoIcons.search,
+              size: 48,
+              color: kTextSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No stores found',
+            style: GoogleFonts.afacad(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: kTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Try adjusting your filters or\ncheck back later',
+            style: GoogleFonts.afacad(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: kTextSecondary,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _selectedCategoryIndex = 0);
+              context.read<MerchantProvider>().clearCategory();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 32,
+                vertical: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(CupertinoIcons.refresh, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  'View All Stores',
+                  style: GoogleFonts.afacad(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== BOTTOM NAV BAR ====================
+  Widget _buildBottomNavBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: kCardColor,
+        border: Border(top: BorderSide(color: kBorderColor)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(CupertinoIcons.house_fill, 'Home', true),
+              _buildNavItem(CupertinoIcons.compass_fill, 'Explore', false),
+              _buildNavItem(CupertinoIcons.heart, 'Favorites', false),
+              _buildNavItem(CupertinoIcons.person_fill, 'Profile', false),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, bool selected) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        // Handle navigation
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: selected ? kPrimaryColor : kTextSecondary,
+              size: 26,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.afacad(
+                color: selected ? kPrimaryColor : kTextSecondary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-class CategoryItem {
-  final String name;
-  final IconData icon;
-  final String emoji;
-  final String image;
-  final String tag;
-  final Color color;
-
-  CategoryItem({
-    required this.name,
-    required this.icon,
-    required this.emoji,
-    required this.image,
-    required this.tag,
-    required this.color,
-  });
-}
-
-// Custom clipper for curved header - ADJUSTED for taller curve
-class CurvedHeaderClipper extends CustomClipper<Path> {
+// ==================== CUSTOM CLIPPER ====================
+class HeaderCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height - 50); // Increased curve height
+    path.lineTo(0, size.height - 40);
+
+    final firstControlPoint = Offset(size.width * 0.25, size.height);
+    final firstEndPoint = Offset(size.width * 0.5, size.height);
+
     path.quadraticBezierTo(
-      size.width / 2,
-      size.height + 10, // More pronounced curve
-      size.width,
-      size.height - 50, // Increased curve height
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
     );
+
+    final secondControlPoint = Offset(size.width * 0.75, size.height);
+    final secondEndPoint = Offset(size.width, size.height - 40);
+
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
     path.lineTo(size.width, 0);
     path.close();
     return path;

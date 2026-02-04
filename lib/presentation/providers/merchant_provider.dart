@@ -40,6 +40,7 @@ class MerchantProvider with ChangeNotifier {
       minimumOrder: 200.0,
       tags: ['Traditional', 'Local', 'Affordable'],
       isFeatured: true,
+      imageUrl: 'assets/images/green.jpg',
       createdAt: DateTime.now(),
     ),
     MerchantModel(
@@ -56,6 +57,7 @@ class MerchantProvider with ChangeNotifier {
       minimumOrder: 150.0,
       tags: ['Groceries', 'Fresh', 'Market'],
       isFeatured: false,
+      imageUrl: 'assets/images/fresh_mart.jpg',
       createdAt: DateTime.now(),
     ),
     MerchantModel(
@@ -72,6 +74,7 @@ class MerchantProvider with ChangeNotifier {
       minimumOrder: 100.0,
       tags: ['Medicine', 'Healthcare', '24/7'],
       isFeatured: true,
+      imageUrl: 'assets/images/pharmacy.jpg',
       createdAt: DateTime.now(),
     ),
   ];
@@ -86,11 +89,11 @@ class MerchantProvider with ChangeNotifier {
     try {
       // Simulate API delay
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _merchants = _mockMerchants;
       _filteredMerchants = _merchants;
       _categories = ['All', 'Restaurant', 'Grocery', 'Pharmacy', 'Electronics'];
-      
+
       _error = null;
       notifyListeners();
     } catch (e) {
@@ -119,15 +122,15 @@ class MerchantProvider with ChangeNotifier {
     try {
       // TODO: Replace with actual API call
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       _selectedMerchant = _merchants.firstWhere(
         (merchant) => merchant.id == merchantId,
         orElse: () => _mockMerchants.first,
       );
-      
+
       // Load merchant products
       _merchantProducts = _getMockProducts(merchantId);
-      
+
       _error = null;
       notifyListeners();
     } catch (e) {
@@ -139,15 +142,17 @@ class MerchantProvider with ChangeNotifier {
 
   void filterByCategory(String category) {
     _selectedCategory = category;
-    
+
     if (category == 'All') {
       _filteredMerchants = _merchants;
     } else {
-      _filteredMerchants = _merchants.where(
-        (merchant) => merchant.category == category,
-      ).toList();
+      _filteredMerchants = _merchants
+          .where(
+            (merchant) => merchant.category == category,
+          )
+          .toList();
     }
-    
+
     _applySearchFilter();
     notifyListeners();
   }
@@ -163,25 +168,27 @@ class MerchantProvider with ChangeNotifier {
       if (_selectedCategory == 'All') {
         _filteredMerchants = _merchants;
       } else {
-        _filteredMerchants = _merchants.where(
-          (merchant) => merchant.category == _selectedCategory,
-        ).toList();
+        _filteredMerchants = _merchants
+            .where(
+              (merchant) => merchant.category == _selectedCategory,
+            )
+            .toList();
       }
     } else {
       _filteredMerchants = _merchants.where((merchant) {
-        final matchesCategory = _selectedCategory == 'All' || 
-                               merchant.category == _selectedCategory;
+        final matchesCategory = _selectedCategory == 'All' ||
+            merchant.category == _selectedCategory;
         final matchesSearch = merchant.name.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ) ||
-            merchant.description.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ) ||
-            (merchant.tags?.any((tag) => tag.toLowerCase().contains(
                   _searchQuery.toLowerCase(),
-                )) ??
+                ) ||
+            merchant.description.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ) ||
+            (merchant.tags?.any((tag) => tag.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    )) ??
                 false);
-        
+
         return matchesCategory && matchesSearch;
       }).toList();
     }
