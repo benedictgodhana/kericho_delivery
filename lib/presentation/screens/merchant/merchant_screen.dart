@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kericho_delivery/data/models/cart_model.dart';
+import 'package:kericho_delivery/data/models/merchant_model.dart';
 import 'package:kericho_delivery/data/models/product_model.dart';
 import 'package:provider/provider.dart';
 import 'package:kericho_delivery/presentation/providers/merchant_provider.dart';
@@ -175,511 +176,377 @@ class _MerchantScreenState extends State<MerchantScreen> {
       backgroundColor: kBackgroundColor,
       body: Stack(
         children: [
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // App Bar with Hero Image
-              SliverAppBar(
-                expandedHeight: 280,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                systemOverlayStyle: SystemUiOverlayStyle.light,
-                leading: Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withOpacity(0.3),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(CupertinoIcons.arrow_left, size: 22),
-                      color: Colors.white,
-                      onPressed: () => Navigator.pop(context),
-                    ),
+          Column(
+            children: [
+              SizedBox(height: _showSearchBar ? 140 : 280),
+              Expanded(
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _buildCartButton(appProvider),
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    children: [
-                      // Hero Image with gradient overlay
-                      Positioned.fill(
-                        child: merchant.imageUrl != null
-                            ? CachedNetworkImage(
-                                imageUrl: merchant.imageUrl!,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: kPrimaryDark,
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: kPrimaryDark,
-                                  child: Icon(
-                                    CupertinoIcons.building_2_fill,
-                                    size: 60,
-                                    color: Colors.white.withOpacity(0.3),
-                                  ),
-                                ),
-                              )
-                            : Container(
-                                color: kPrimaryDark,
-                                child: Icon(
-                                  CupertinoIcons.building_2_fill,
-                                  size: 60,
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                              ),
-                      ),
-                      // Gradient overlay
-                      Container(
+                  slivers: [
+                    // Merchant Details
+                    SliverToBoxAdapter(
+                      child: Container(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.8),
-                              Colors.transparent,
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.4),
-                            ],
+                          color: kBackgroundColor,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(30),
                           ),
                         ),
-                      ),
-                      // Merchant name and status
-                      Positioned(
-                        bottom: 100,
-                        left: 20,
-                        right: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: merchant.isOpen 
-                                  ? kSuccessColor.withOpacity(0.9)
-                                  : kErrorColor.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    merchant.isOpen 
-                                      ? CupertinoIcons.checkmark_circle_fill
-                                      : CupertinoIcons.xmark_circle_fill,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    merchant.isOpen ? 'OPEN NOW' : 'CLOSED',
-                                    style: GoogleFonts.afacad(
-                                      fontSize: 13,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              merchant.name,
-                              style: GoogleFonts.afacad(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: -0.5,
-                                height: 1.2,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Merchant Details
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: kBackgroundColor,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Rating and Details Row
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: kPrimaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: kBorderColor, width: 1),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.star_fill,
-                                    size: 16,
-                                    color: kWarningColor,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    merchant.rating.toStringAsFixed(1),
-                                    style: GoogleFonts.afacad(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: kWarningColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    ' (${merchant.ratingCount})',
-                                    style: GoogleFonts.afacad(
-                                      fontSize: 14,
-                                      color: kTextSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Spacer(),
-                            _buildInfoChip(
-                              '${merchant.deliveryTime} min',
-                              CupertinoIcons.clock,
-                            ),
-                            const SizedBox(width: 8),
-                            _buildInfoChip(
-                              merchant.deliveryFee == 0
-                                  ? 'Free'
-                                  : 'KSh ${merchant.deliveryFee.toInt()}',
-                              CupertinoIcons.car_detailed,
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Description
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: kCardColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: kBorderColor, width: 1),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Rating and Details Row
                               Row(
                                 children: [
-                                  Icon(
-                                    CupertinoIcons.info_circle_fill,
-                                    size: 18,
-                                    color: kPrimaryColor,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: kPrimaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: kBorderColor, width: 1),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          CupertinoIcons.star_fill,
+                                          size: 16,
+                                          color: kWarningColor,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          merchant.rating.toStringAsFixed(1),
+                                          style: GoogleFonts.afacad(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w800,
+                                            color: kWarningColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          ' (${merchant.ratingCount})',
+                                          style: GoogleFonts.afacad(
+                                            fontSize: 14,
+                                            color: kTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  _buildInfoChip(
+                                    '${merchant.deliveryTime} min',
+                                    CupertinoIcons.clock,
                                   ),
                                   const SizedBox(width: 8),
+                                  _buildInfoChip(
+                                    merchant.deliveryFee == 0
+                                        ? 'Free'
+                                        : 'KSh ${merchant.deliveryFee.toInt()}',
+                                    CupertinoIcons.car_detailed,
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Description
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: kCardColor,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: kBorderColor, width: 1),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          CupertinoIcons.info_circle_fill,
+                                          size: 18,
+                                          color: kPrimaryColor,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'About',
+                                          style: GoogleFonts.afacad(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: kTextPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      merchant.description,
+                                      style: GoogleFonts.afacad(
+                                        fontSize: 14.5,
+                                        color: kTextSecondary,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          CupertinoIcons.location,
+                                          size: 16,
+                                          color: kTextSecondary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            merchant.address ?? 'Kericho, Kenya',
+                                            style: GoogleFonts.afacad(
+                                              fontSize: 14,
+                                              color: kTextSecondary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Category Filter
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    'About',
+                                    'Menu Categories',
                                     style: GoogleFonts.afacad(
-                                      fontSize: 16,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w800,
                                       color: kTextPrimary,
                                     ),
                                   ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    height: 50,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: categories.length,
+                                      itemBuilder: (context, index) {
+                                        final category = categories[index];
+                                        final isSelected = _selectedCategory == category;
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            right: index < categories.length - 1 ? 8 : 0,
+                                          ),
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              HapticFeedback.lightImpact();
+                                              setState(() {
+                                                _selectedCategory = category;
+                                              });
+                                            },
+                                            child: AnimatedContainer(
+                                              duration: const Duration(milliseconds: 200),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 20,
+                                                vertical: 12,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                gradient: isSelected
+                                                    ? LinearGradient(
+                                                        colors: [
+                                                          kPrimaryColor,
+                                                          const Color(0xFF0D9488),
+                                                        ],
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                      )
+                                                    : null,
+                                                color: isSelected ? null : kCardColor,
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: isSelected
+                                                      ? kPrimaryColor
+                                                      : kBorderColor,
+                                                  width: 1.5,
+                                                ),
+                                                boxShadow: [
+                                                  if (isSelected)
+                                                    BoxShadow(
+                                                      color: kPrimaryColor.withOpacity(0.3),
+                                                      blurRadius: 8,
+                                                      offset: const Offset(0, 3),
+                                                    ),
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.05),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 1),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Text(
+                                                category,
+                                                style: GoogleFonts.afacad(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : kTextPrimary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                merchant.description,
-                                style: GoogleFonts.afacad(
-                                  fontSize: 14.5,
-                                  color: kTextSecondary,
-                                  height: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
+
+                              const SizedBox(height: 24),
+
+                              // Products Header
                               Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Icon(
-                                    CupertinoIcons.location,
-                                    size: 16,
-                                    color: kTextSecondary,
+                                  Text(
+                                    'Menu Items',
+                                    style: GoogleFonts.afacad(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      color: kTextPrimary,
+                                      letterSpacing: -0.3,
+                                    ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      merchant.address ?? 'Kericho, Kenya',
-                                      style: GoogleFonts.afacad(
-                                        fontSize: 14,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: kPrimaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(CupertinoIcons.bag_fill,
+                                            size: 14, color: kPrimaryColor),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${filteredProducts.length} items',
+                                          style: GoogleFonts.afacad(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: kPrimaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Products Grid
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      sliver: filteredProducts.isEmpty
+                          ? SliverToBoxAdapter(
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 40),
+                                padding: const EdgeInsets.all(40),
+                                decoration: BoxDecoration(
+                                  color: kCardColor,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: kBorderColor),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      width: 100,
+                                      height: 100,
+                                      decoration: const BoxDecoration(
+                                        color: kBackgroundColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.search,
+                                        size: 48,
                                         color: kTextSecondary,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Category Filter
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Menu Categories',
-                              style: GoogleFonts.afacad(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: kTextPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              height: 50,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: categories.length,
-                                itemBuilder: (context, index) {
-                                  final category = categories[index];
-                                  final isSelected = _selectedCategory == category;
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      right: index < categories.length - 1 ? 8 : 0,
-                                    ),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        HapticFeedback.lightImpact();
-                                        setState(() {
-                                          _selectedCategory = category;
-                                        });
-                                      },
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 200),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 20,
-                                          vertical: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          gradient: isSelected
-                                              ? LinearGradient(
-                                                  colors: [
-                                                    kPrimaryColor,
-                                                    const Color(0xFF0D9488),
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                )
-                                              : null,
-                                          color: isSelected ? null : kCardColor,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isSelected
-                                                ? kPrimaryColor
-                                                : kBorderColor,
-                                            width: 1.5,
-                                          ),
-                                          boxShadow: [
-                                            if (isSelected)
-                                              BoxShadow(
-                                                color: kPrimaryColor.withOpacity(0.3),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 3),
-                                              ),
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.05),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 1),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          category,
-                                          style: GoogleFonts.afacad(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: isSelected
-                                                ? Colors.white
-                                                : kTextPrimary,
-                                          ),
-                                        ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      'No items found',
+                                      style: GoogleFonts.afacad(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: kTextPrimary,
                                       ),
                                     ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Try a different category',
+                                      style: GoogleFonts.afacad(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w400,
+                                        color: kTextSecondary,
+                                        height: 1.5,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final product = filteredProducts[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: _buildProductCard(product),
                                   );
                                 },
+                                childCount: filteredProducts.length,
                               ),
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Products Header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Menu Items',
-                              style: GoogleFonts.afacad(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: kTextPrimary,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: kPrimaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(CupertinoIcons.bag_fill,
-                                      size: 14, color: kPrimaryColor),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '${filteredProducts.length} items',
-                                    style: GoogleFonts.afacad(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: kPrimaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
-                  ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                  ],
                 ),
               ),
-
-              // Products Grid
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                sliver: filteredProducts.isEmpty
-                    ? SliverToBoxAdapter(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 40),
-                          padding: const EdgeInsets.all(40),
-                          decoration: BoxDecoration(
-                            color: kCardColor,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: kBorderColor),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: const BoxDecoration(
-                                  color: kBackgroundColor,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  CupertinoIcons.search,
-                                  size: 48,
-                                  color: kTextSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                'No items found',
-                                style: GoogleFonts.afacad(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: kTextPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Try a different category',
-                                style: GoogleFonts.afacad(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w400,
-                                  color: kTextSecondary,
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final product = filteredProducts[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: _buildProductCard(product),
-                            );
-                          },
-                          childCount: filteredProducts.length,
-                        ),
-                      ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
-
+          _buildCurvedHeader(merchant, appProvider),
+          
           // Floating Order Summary
           if (appProvider.cartItemCount > 0) 
             Positioned(
@@ -742,6 +609,237 @@ class _MerchantScreenState extends State<MerchantScreen> {
     );
   }
 
+  Widget _buildCurvedHeader(MerchantModel merchant, AppProvider appProvider) {
+    final double scrollPercentage = (_scrollOffset / 100).clamp(0.0, 1.0);
+    final double opacity = 1.0 - scrollPercentage.clamp(0.0, 0.7);
+
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: ClipPath(
+        clipper: MerchantHeaderCurveClipper(),
+        child: Container(
+          height: 280,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                kPrimaryDark,
+                Color.lerp(
+                    const Color(0xFF1E293B), kPrimaryDark, scrollPercentage)!,
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Background Image with Gradient Overlay
+              if (merchant.imageUrl != null)
+                Positioned.fill(
+                  child: CachedNetworkImage(
+                    imageUrl: merchant.imageUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: kPrimaryDark,
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: kPrimaryDark,
+                    ),
+                  ),
+                ),
+              
+              // Gradient Overlay
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.8),
+                      Colors.black.withOpacity(0.4),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      // Back Button and Cart
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: kOverlayWhite,
+                              ),
+                              child: Icon(
+                                CupertinoIcons.arrow_left,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                          _buildCartButton(appProvider),
+                        ],
+                      ),
+                      
+                      AnimatedOpacity(
+                        opacity: opacity,
+                        duration: const Duration(milliseconds: 200),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 20),
+                            // Status Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: merchant.isOpen 
+                                  ? kSuccessColor.withOpacity(0.9)
+                                  : kErrorColor.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    merchant.isOpen 
+                                      ? CupertinoIcons.checkmark_circle_fill
+                                      : CupertinoIcons.xmark_circle_fill,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    merchant.isOpen ? 'OPEN NOW' : 'CLOSED',
+                                    style: GoogleFonts.afacad(
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Merchant Name
+                            Text(
+                              merchant.name,
+                              style: GoogleFonts.afacad(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                                height: 1.2,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+                            // Delivery Info
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: kOverlayWhite,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.clock,
+                                        color: Colors.white.withOpacity(0.9),
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${merchant.deliveryTime} min',
+                                        style: GoogleFonts.afacad(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: kOverlayWhite,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        merchant.deliveryFee == 0
+                                            ? CupertinoIcons.checkmark_seal_fill
+                                            : CupertinoIcons.car_detailed,
+                                        color: Colors.white.withOpacity(0.9),
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        merchant.deliveryFee == 0
+                                            ? 'Free delivery'
+                                            : 'KSh ${merchant.deliveryFee.toInt()}',
+                                        style: GoogleFonts.afacad(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInfoChip(String text, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -783,7 +881,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
           height: 40,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.black.withOpacity(0.3),
+            color: kOverlayWhite,
           ),
           child: Icon(
             CupertinoIcons.cart,
@@ -935,26 +1033,37 @@ class _MerchantScreenState extends State<MerchantScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          product.category,
-                          style: GoogleFonts.afacad(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: kPrimaryColor,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: kPrimaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            product.category,
+                            style: GoogleFonts.afacad(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: kPrimaryColor,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
                       GestureDetector(
                         onTap: () => _addToCart(product),
                         child: Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [kPrimaryColor, const Color(0xFF0D9488)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
                                 color: kPrimaryColor.withOpacity(0.3),
@@ -963,10 +1072,23 @@ class _MerchantScreenState extends State<MerchantScreen> {
                               ),
                             ],
                           ),
-                          child: Icon(
-                            CupertinoIcons.plus,
-                            size: 18,
-                            color: Colors.white,
+                          child: Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.plus,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Add',
+                                style: GoogleFonts.afacad(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -1143,6 +1265,39 @@ class _MerchantScreenState extends State<MerchantScreen> {
       },
     );
   }
+}
+
+class MerchantHeaderCurveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 40);
+
+    final firstControlPoint = Offset(size.width * 0.25, size.height);
+    final firstEndPoint = Offset(size.width * 0.5, size.height - 20);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    final secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    final secondEndPoint = Offset(size.width, size.height - 40);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
 class ProductDetailsSheet extends StatefulWidget {

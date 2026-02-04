@@ -103,7 +103,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         // TODO: Upload profile image if _profileImage != null
         // TODO: Call API to update profile
 
-        await appProvider.updateUserProfile(updatedUser);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),

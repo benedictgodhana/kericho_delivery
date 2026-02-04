@@ -10,6 +10,7 @@ class UserModel {
   final bool isVerified;
   final double? rating;
   final int totalOrders;
+  final String? googleId;
 
   UserModel({
     required this.id,
@@ -23,24 +24,36 @@ class UserModel {
     this.isVerified = false,
     this.rating,
     this.totalOrders = 0,
+    this.googleId,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Map backend keys to model fields
     return UserModel(
-      id: json['id'],
-      phone: json['phone'],
-      email: json['email'],
-      fullName: json['fullName'],
-      profileImage: json['profileImage'],
+      id: json['id']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      email: json['email']?.toString(),
+      fullName: json['fullName'] ?? json['name'] ?? '',
+      profileImage: json['profileImage'] ?? json['profile_photo'],
       userType: UserType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['userType'],
+        (e) =>
+            e.toString().split('.').last ==
+            (json['userType'] ?? json['type'] ?? 'customer'),
         orElse: () => UserType.customer,
       ),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      isVerified: json['isVerified'] ?? false,
-      rating: json['rating']?.toDouble(),
-      totalOrders: json['totalOrders'] ?? 0,
+      createdAt:
+          DateTime.tryParse(json['createdAt'] ?? json['created_at'] ?? '') ??
+              DateTime.now(),
+      updatedAt: (json['updatedAt'] ?? json['updated_at']) != null
+          ? DateTime.tryParse(json['updatedAt'] ?? json['updated_at'])
+          : null,
+      isVerified: (json['isVerified'] ?? json['is_active']) == true ||
+          (json['isVerified'] ?? json['is_active']) == 1,
+      rating: json['rating'] != null
+          ? double.tryParse(json['rating'].toString())
+          : null,
+      totalOrders: json['totalOrders'] ?? json['orders_count'] ?? 0,
+      googleId: json['googleId'] ?? json['google_id'],
     );
   }
 
@@ -57,6 +70,7 @@ class UserModel {
       'isVerified': isVerified,
       'rating': rating,
       'totalOrders': totalOrders,
+      'googleId': googleId,
     };
   }
 
@@ -72,6 +86,7 @@ class UserModel {
     bool? isVerified,
     double? rating,
     int? totalOrders,
+    String? googleId,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -85,6 +100,7 @@ class UserModel {
       isVerified: isVerified ?? this.isVerified,
       rating: rating ?? this.rating,
       totalOrders: totalOrders ?? this.totalOrders,
+      googleId: googleId ?? this.googleId,
     );
   }
 }

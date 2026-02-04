@@ -29,6 +29,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Timer? _searchDebounceTimer;
   double _scrollOffset = 0.0;
   bool _isSearchActive = false;
+  // Bottom navigation index
+  int _bottomNavIndex = 0;
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -44,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   static const Color kWarningColor = Color(0xFFF59E0B);
   static const Color kErrorColor = Color(0xFFEF4444);
   static const Color kInfoColor = Color(0xFF3B82F6);
-  static const Color kOverlayWhite = Color(0x1AFFFFFF); // 10% white
+  static const Color kOverlayWhite = Color(0x1AFFFFFF);
 
   final List<Map<String, dynamic>> _categories = [
     {'emoji': '🍽️', 'label': 'All', 'tag': 'All', 'icon': CupertinoIcons.grid},
@@ -99,9 +102,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(_fadeController);
-    
+    _fadeAnimation =
+        Tween<double>(begin: 1.0, end: 0.0).animate(_fadeController);
+
     _scrollController.addListener(_onScroll);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeData();
     });
@@ -126,7 +131,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _onScroll() {
     final offset = _scrollController.offset;
     setState(() => _scrollOffset = offset);
-    
     if (offset > 100 && !_showSearchBar) {
       setState(() => _showSearchBar = true);
       _fadeController.reverse();
@@ -139,10 +143,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _handleCategorySelected(int index) {
     setState(() => _selectedCategoryIndex = index);
     HapticFeedback.lightImpact();
-
     final category = _categories[index];
     final merchantProvider = context.read<MerchantProvider>();
-
     if (category['tag'] == 'All') {
       merchantProvider.clearCategory();
     } else {
@@ -152,11 +154,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _handleSearchChanged(String query) {
     setState(() => _searchQuery = query);
-
-    // Cancel previous timer
     _searchDebounceTimer?.cancel();
-
-    // Start new timer
     _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (_searchQuery == query && mounted) {
         context.read<MerchantProvider>().searchMerchants(query);
@@ -271,18 +269,53 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _onBottomNavTapped(int index) {
+    HapticFeedback.lightImpact();
+
+    if (index == 2) {
+      // This is the cart button in the middle
+      _navigateToCart();
+      return;
+    }
+
+    setState(() {
+      _bottomNavIndex = index;
+    });
+
+    // Handle navigation to different screens
+    switch (index) {
+      case 0: // Home
+        // Already on home, just scroll to top
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        break;
+      case 1: // Explore
+        AppRouter.pushNamed('explore');
+        break;
+      case 3: // Favorites
+        AppRouter.pushNamed('favorites');
+        break;
+      case 4: // Profile
+        AppRouter.pushNamed(AppRouter.profile);
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBackgroundColor,
       body: Consumer3<LocationProvider, AppProvider, MerchantProvider>(
-        builder: (context, locationProvider, appProvider, merchantProvider, _) {
+        builder:
+            (context, locationProvider, appProvider, merchantProvider, child) {
           return Stack(
             children: [
-              // Main content
               Column(
                 children: [
-                  SizedBox(height: _isSearchActive ? 180 : 250), // Reserve space for header
+                  SizedBox(height: _isSearchActive ? 140 : 220),
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: () async {
@@ -296,20 +329,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
                         slivers: [
-                          // Categories Section
                           SliverToBoxAdapter(
                             child: _buildCategoriesSection(),
                           ),
-
-                          // Featured Merchants Section
                           if (merchantProvider
                               .getFeaturedMerchants()
                               .isNotEmpty)
                             SliverToBoxAdapter(
                               child: _buildFeaturedSection(merchantProvider),
                             ),
-
-                          // Near You Section Header
                           SliverToBoxAdapter(
                             child: Padding(
                               padding:
@@ -356,8 +384,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
-
-                          // Merchants Grid/List
                           if (merchantProvider.isLoading)
                             SliverToBoxAdapter(child: _buildLoadingState())
                           else if (merchantProvider.merchants.isEmpty)
@@ -381,7 +407,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                             ),
-
                           const SliverToBoxAdapter(
                               child: SizedBox(height: 100)),
                         ],
@@ -390,25 +415,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-
-              // Curved Header with animated search
               _buildCurvedHeader(locationProvider, appProvider),
             ],
           );
         },
       ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: _buildFloatingBottomNavBar(),
     );
   }
 
-  // ==================== CURVED HEADER ====================
   Widget _buildCurvedHeader(
       LocationProvider locationProvider, AppProvider appProvider) {
     final double scrollPercentage = (_scrollOffset / 100).clamp(0.0, 1.0);
     final double searchBarOpacity = 1.0 - scrollPercentage.clamp(0.0, 0.7);
-    
+    final user = appProvider.user;
+
     return Positioned(
       top: 0,
       left: 0,
@@ -423,7 +444,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               end: Alignment.bottomRight,
               colors: [
                 kPrimaryDark,
-                Color.lerp(const Color(0xFF1E293B), kPrimaryDark, scrollPercentage)!,
+                Color.lerp(
+                    const Color(0xFF1E293B), kPrimaryDark, scrollPercentage)!,
               ],
             ),
           ),
@@ -432,63 +454,57 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 12),
-                  // Top Bar with Animated Search
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Back Button (when search is active)
-                      if (_isSearchActive)
-                        GestureDetector(
-                          onTap: _toggleSearch,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: kOverlayWhite,
-                            ),
-                            child: Icon(
-                              CupertinoIcons.arrow_left,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _onBottomNavTapped(4);
+                        },
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: Colors.white.withOpacity(0.25),
+                          backgroundImage: (user?.profileImage != null &&
+                                  user!.profileImage!.isNotEmpty)
+                              ? NetworkImage(user.profileImage!)
+                              : null,
+                          child: (user?.profileImage == null ||
+                                  user!.profileImage!.isEmpty)
+                              ? const Icon(Icons.person,
+                                  color: Colors.white, size: 32)
+                              : null,
                         ),
-                      
-                      // Search Field (Full width when active)
-                      if (_isSearchActive) ...[
-                        const SizedBox(width: 12),
+                      ),
+                      const SizedBox(width: 14),
+                      if (user != null)
                         Expanded(
-                          child: _buildSearchField(1.0), // Fully visible
-                        ),
-                      ],
-                      
-                      // Compact Top Bar (when search is inactive)
-                      if (!_isSearchActive) ...[
-                        // Time/Logo
-                        AnimatedOpacity(
-                          opacity: searchBarOpacity,
-                          duration: const Duration(milliseconds: 200),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: kOverlayWhite,
-                              shape: BoxShape.circle,
+                          child: Text(
+                            user.fullName,
+                            style: GoogleFonts.afacad(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.4,
                             ),
-                            child: Text(
-                              'KD',
-                              style: GoogleFonts.afacad(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      else
+                        const Text(
+                          "Welcome",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        
-                        const Spacer(),
-                        
-                        // Search Button
+                      const Spacer(),
+                      if (!_isSearchActive) ...[
                         GestureDetector(
                           onTap: _toggleSearch,
                           child: Container(
@@ -505,8 +521,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        
-                        // Notification Bell
                         Stack(
                           children: [
                             GestureDetector(
@@ -539,18 +553,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           ],
                         ),
                         const SizedBox(width: 12),
-                        
-                        // Cart Button
                         _buildCartButton(appProvider),
                       ],
                     ],
                   ),
-                  
-                  // Location Info (only when search is inactive)
+                  if (_isSearchActive) ...[
+                    const SizedBox(height: 12),
+                    _buildSearchField(1.0),
+                  ],
                   if (!_isSearchActive) ...[
                     const Spacer(flex: 1),
-                    
-                    // Animated Location Section
                     AnimatedOpacity(
                       opacity: searchBarOpacity,
                       duration: const Duration(milliseconds: 200),
@@ -583,10 +595,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 Flexible(
                                   child: Text(
                                     locationProvider.currentLocation?.address ??
-                                        'Kericho, Kenya',
+                                        'Kericho',
                                     style: GoogleFonts.afacad(
                                       color: Colors.white,
-                                      fontSize: 24,
+                                      fontSize: 22,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: -0.2,
                                     ),
@@ -607,7 +619,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: kOverlayWhite,
                                   borderRadius: BorderRadius.circular(12),
@@ -648,7 +661,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildSearchField(double opacity) {
-    // Calculate background color based on scroll
     final scrollPercentage = (_scrollOffset / 100).clamp(0.0, 1.0);
     final backgroundColor = Color.lerp(
       Colors.transparent,
@@ -727,64 +739,66 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildCartButton(AppProvider appProvider) {
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: kOverlayWhite,
+    return GestureDetector(
+      onTap: _navigateToCart,
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: kOverlayWhite,
+            ),
+            child: Icon(
+              CupertinoIcons.cart,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
-          child: Icon(
-            CupertinoIcons.cart,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-        if (appProvider.cartItemCount > 0)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: kErrorColor,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 2,
-                    offset: Offset(0, 1),
-                  ),
-                ],
-              ),
-              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-              child: Center(
-                child: Text(
-                  appProvider.cartItemCount > 9
-                      ? '9+'
-                      : '${appProvider.cartItemCount}',
-                  style: GoogleFonts.afacad(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+          if (appProvider.cartItemCount > 0)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: kErrorColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 2,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                child: Center(
+                  child: Text(
+                    appProvider.cartItemCount > 9
+                        ? '9+'
+                        : '${appProvider.cartItemCount}',
+                    style: GoogleFonts.afacad(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
-  // ==================== CATEGORIES SECTION ====================
   Widget _buildCategoriesSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 30),
+          const SizedBox(height: 50),
           SizedBox(
             height: 110,
             child: ListView.builder(
@@ -809,10 +823,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildCategoryCard(
-    Map<String, dynamic> category,
-    bool isSelected,
-    int index,
-  ) {
+      Map<String, dynamic> category, bool isSelected, int index) {
     return GestureDetector(
       onTap: () => _handleCategorySelected(index),
       child: AnimatedContainer(
@@ -828,7 +839,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: isSelected
-                      ? [kPrimaryColor.withOpacity(0.2), kSuccessColor.withOpacity(0.1)]
+                      ? [
+                          kPrimaryColor.withOpacity(0.2),
+                          kSuccessColor.withOpacity(0.1)
+                        ]
                       : [Colors.white, Colors.white],
                 ),
                 shape: BoxShape.circle,
@@ -858,7 +872,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: isSelected ? kPrimaryColor.withOpacity(0.1) : Colors.transparent,
+                color: isSelected
+                    ? kPrimaryColor.withOpacity(0.1)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -879,10 +895,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ==================== FEATURED SECTION ====================
   Widget _buildFeaturedSection(MerchantProvider merchantProvider) {
     final featuredMerchants = merchantProvider.getFeaturedMerchants();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -928,10 +942,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               TextButton(
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                  // Navigate to all featured
+                  // Navigate to all featured - implement if needed
                 },
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   backgroundColor: kPrimaryColor.withOpacity(0.08),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1102,7 +1117,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ==================== MERCHANT CARD ====================
   Widget _buildMerchantCard(MerchantModel merchant) {
     return GestureDetector(
       onTap: () => _navigateToMerchant(merchant.id, merchant.name),
@@ -1325,7 +1339,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [kWarningColor, const Color(0xFFF59E0B)],
@@ -1360,7 +1375,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: kBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
@@ -1390,7 +1406,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const SizedBox(width: 8),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: kBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
@@ -1428,7 +1445,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const SizedBox(width: 8),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: kBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
@@ -1462,7 +1480,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ==================== STATE WIDGETS ====================
   Widget _buildLoadingState() {
     return Container(
       padding: const EdgeInsets.all(60),
@@ -1584,10 +1601,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1614,71 +1628,179 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ==================== BOTTOM NAV BAR ====================
-  Widget _buildBottomNavBar() {
+  Widget _buildFloatingBottomNavBar() {
     return Container(
-      decoration: BoxDecoration(
-        color: kCardColor,
-        border: Border(top: BorderSide(color: kBorderColor, width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      height: 70,
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: kCardColor,
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: kBorderColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 25,
+                  offset: const Offset(0, 8),
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildNavItem(
+                    0,
+                    CupertinoIcons.house_fill,
+                    'Home',
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(
+                    1,
+                    CupertinoIcons.compass_fill,
+                    'Explore',
+                  ),
+                ),
+                const SizedBox(width: 70), // Space for center button
+                Expanded(
+                  child: _buildNavItem(
+                    3,
+                    CupertinoIcons.heart,
+                    'Favorites',
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(
+                    4,
+                    CupertinoIcons.person_fill,
+                    'Profile',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: MediaQuery.of(context).size.width / 2 - 35,
+            top: -20,
+            child: GestureDetector(
+              onTap: () => _onBottomNavTapped(2),
+              child: Consumer<AppProvider>(
+                builder: (context, appProvider, child) {
+                  return Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [kPrimaryColor, const Color(0xFF0D9488)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kPrimaryColor.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        const Center(
+                          child: Icon(
+                            CupertinoIcons.cart_fill,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        if (appProvider.cartItemCount > 0)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: kErrorColor,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 3,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 24,
+                                minHeight: 24,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  appProvider.cartItemCount > 9
+                                      ? '9+'
+                                      : '${appProvider.cartItemCount}',
+                                  style: GoogleFonts.afacad(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(CupertinoIcons.house_fill, 'Home', true),
-              _buildNavItem(CupertinoIcons.compass_fill, 'Explore', false),
-              _buildNavItem(CupertinoIcons.heart, 'Favorites', false),
-              _buildNavItem(CupertinoIcons.person_fill, 'Profile', false),
-            ],
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool selected) {
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _bottomNavIndex == index;
+
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        // Handle navigation
-      },
+      onTap: () => _onBottomNavTapped(index),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          gradient: selected
-              ? LinearGradient(
-                  colors: [kPrimaryColor.withOpacity(0.1), kPrimaryColor.withOpacity(0.05)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
-              : null,
-          borderRadius: BorderRadius.circular(16),
+          color:
+              isSelected ? kPrimaryColor.withOpacity(0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: selected ? kPrimaryColor : kTextSecondary,
-              size: 24,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              transform: Matrix4.translationValues(
+                0,
+                isSelected ? -4 : 0,
+                0,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? kPrimaryColor : kTextSecondary,
+                size: isSelected ? 26 : 22,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: GoogleFonts.afacad(
-                color: selected ? kPrimaryColor : kTextSecondary,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                color: isSelected ? kPrimaryColor : kTextSecondary,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                 fontSize: 11,
+                letterSpacing: isSelected ? -0.2 : 0,
               ),
             ),
           ],
@@ -1688,7 +1810,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-// ==================== CUSTOM CLIPPER ====================
 class HeaderCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -1697,7 +1818,6 @@ class HeaderCurveClipper extends CustomClipper<Path> {
 
     final firstControlPoint = Offset(size.width * 0.25, size.height);
     final firstEndPoint = Offset(size.width * 0.5, size.height - 20);
-
     path.quadraticBezierTo(
       firstControlPoint.dx,
       firstControlPoint.dy,
@@ -1707,7 +1827,6 @@ class HeaderCurveClipper extends CustomClipper<Path> {
 
     final secondControlPoint = Offset(size.width * 0.75, size.height - 40);
     final secondEndPoint = Offset(size.width, size.height - 50);
-
     path.quadraticBezierTo(
       secondControlPoint.dx,
       secondControlPoint.dy,

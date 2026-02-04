@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android") // keep existing version 1.8.22
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -36,6 +37,14 @@ android {
     buildFeatures {
         buildConfig = true
     }
+}
+
+dependencies {
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+    // Add the dependencies for Firebase products you want to use
+    implementation("com.google.firebase:firebase-analytics")
+    // Add other Firebase dependencies as needed
 }
 
 flutter {

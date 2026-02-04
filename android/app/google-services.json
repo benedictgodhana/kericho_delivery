@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "530524190281",
+    "project_id": "ne-boda",
+    "storage_bucket": "ne-boda.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:530524190281:android:44f165a6ad95ce18583198",
+        "android_client_info": {
+          "package_name": "com.example.kericho_delivery"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "530524190281-ho01k8d3ubodi87hq42df3vmudmqmc9n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.kericho_delivery",
+            "certificate_hash": "013fedf28c803ad8e09d1f153a726fd7b09f3add"
+          }
+        },
+        {
+          "client_id": "530524190281-dgn7e9com0b72skd44nt5aj1pfos6t5q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGH2RP1RPIrxJNtgCk5GOy2zook1DBSR8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "530524190281-dgn7e9com0b72skd44nt5aj1pfos6t5q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
