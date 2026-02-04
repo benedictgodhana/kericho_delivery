@@ -41,6 +41,23 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	
+	<!-- ADD THESE LOCATION PERMISSION KEYS -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to show nearby restaurants, shops, and delivery services.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to provide delivery tracking services even when the app is in the background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs access to your location to provide delivery tracking services even when the app is in the background.</string>
+	
+	<!-- Optional: Add camera permission if your app allows photo uploads -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to your camera to upload profile pictures or review photos.</string>
+	
+	<!-- Optional: Add photo library permission -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to upload profile pictures or review photos.</string>
+	
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
