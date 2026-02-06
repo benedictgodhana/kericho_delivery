@@ -3,7 +3,7 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // ── Change this to your real server URL in production ──
-  static const String baseUrl = 'https://f0f71fa0206f.ngrok-free.app/api';
+  static const String baseUrl = 'https://4a5c-41-81-160-213.ngrok-free.app/api';
   static const String apiBaseUrl = baseUrl;
 
   // Customer authentication endpoints

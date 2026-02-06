@@ -13,6 +13,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class AppProvider with ChangeNotifier {
+  /// Clears all favorite merchants and updates persistent storage.
+  Future<void> clearAllFavorites() async {
+    _favorites.clear();
+    await _saveFavorites();
+    notifyListeners();
+  }
+
   static AppProvider? _instance;
 
   static AppProvider get instance {
@@ -211,7 +218,7 @@ class AppProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         // Debug log to see actual response structure
         if (kDebugMode) {
           print('OTP Response: $data');
@@ -223,23 +230,23 @@ class AppProvider with ChangeNotifier {
         if (data is Map<String, dynamic>) {
           if (data.containsKey('success')) {
             final successValue = data['success'];
-            success = successValue == true || 
-                      successValue == 'true' || 
-                      successValue == 1 ||
-                      successValue == '1';
+            success = successValue == true ||
+                successValue == 'true' ||
+                successValue == 1 ||
+                successValue == '1';
           } else if (data.containsKey('status')) {
             final statusValue = data['status'];
-            success = statusValue == true || 
-                      statusValue == 'true' || 
-                      statusValue == 'success' ||
-                      statusValue == 200 ||
-                      statusValue == 1;
+            success = statusValue == true ||
+                statusValue == 'true' ||
+                statusValue == 'success' ||
+                statusValue == 200 ||
+                statusValue == 1;
           } else if (data.containsKey('verified')) {
             final verifiedValue = data['verified'];
-            success = verifiedValue == true || 
-                      verifiedValue == 'true' || 
-                      verifiedValue == 1 ||
-                      verifiedValue == '1';
+            success = verifiedValue == true ||
+                verifiedValue == 'true' ||
+                verifiedValue == 1 ||
+                verifiedValue == '1';
           }
         } else if (data is String) {
           success = data.toLowerCase() == 'true' || data == '1';
@@ -270,17 +277,17 @@ class AppProvider with ChangeNotifier {
                 if (kDebugMode) print('Error parsing user from data: $e');
               }
             }
-            
+
             // Try different token key possibilities
             token = data['token'] ?? data['access_token'] ?? data['auth_token'];
-            
+
             // Check for Google linkage
             if (data.containsKey('has_google')) {
               final googleValue = data['has_google'];
-              hasGoogle = googleValue == true || 
-                          googleValue == 'true' || 
-                          googleValue == 1 ||
-                          googleValue == '1';
+              hasGoogle = googleValue == true ||
+                  googleValue == 'true' ||
+                  googleValue == 1 ||
+                  googleValue == '1';
             } else if (user != null) {
               hasGoogle = user.googleId != null && user.googleId!.isNotEmpty;
             }
@@ -305,7 +312,7 @@ class AppProvider with ChangeNotifier {
             'user': user,
           };
         } else {
-          final message = (data is Map<String, dynamic>) 
+          final message = (data is Map<String, dynamic>)
               ? (data['message'] ?? data['error'] ?? 'Verification failed')
               : 'Verification failed';
           throw Exception(message);
@@ -347,7 +354,7 @@ class AppProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         // Debug log
         if (kDebugMode) {
           print('Google login response: $data');
@@ -358,17 +365,17 @@ class AppProvider with ChangeNotifier {
         if (data is Map<String, dynamic>) {
           if (data.containsKey('success')) {
             final successValue = data['success'];
-            success = successValue == true || 
-                      successValue == 'true' || 
-                      successValue == 1 ||
-                      successValue == '1';
+            success = successValue == true ||
+                successValue == 'true' ||
+                successValue == 1 ||
+                successValue == '1';
           } else if (data.containsKey('status')) {
             final statusValue = data['status'];
-            success = statusValue == true || 
-                      statusValue == 'true' || 
-                      statusValue == 'success' ||
-                      statusValue == 200 ||
-                      statusValue == 1;
+            success = statusValue == true ||
+                statusValue == 'true' ||
+                statusValue == 'success' ||
+                statusValue == 200 ||
+                statusValue == 1;
           }
         } else if (data is String) {
           success = data.toLowerCase() == 'true' || data == '1';
@@ -388,7 +395,8 @@ class AppProvider with ChangeNotifier {
               try {
                 user = UserModel.fromJson(data['user']);
               } catch (e) {
-                if (kDebugMode) print('Error parsing user from Google login: $e');
+                if (kDebugMode)
+                  print('Error parsing user from Google login: $e');
               }
             } else if (data.containsKey('data') && data['data'] is Map) {
               try {
@@ -397,7 +405,7 @@ class AppProvider with ChangeNotifier {
                 if (kDebugMode) print('Error parsing user from data: $e');
               }
             }
-            
+
             // Try different token key possibilities
             token = data['token'] ?? data['access_token'] ?? data['auth_token'];
           }
@@ -418,13 +426,13 @@ class AppProvider with ChangeNotifier {
           if (kDebugMode) {
             print('Google login/link successful → user: ${user?.id}');
           }
-          
+
           return {
             'success': true,
             'user': user,
           };
         } else {
-          final message = (data is Map<String, dynamic>) 
+          final message = (data is Map<String, dynamic>)
               ? (data['message'] ?? data['error'] ?? 'Google login failed')
               : 'Google login failed';
           throw Exception(message);

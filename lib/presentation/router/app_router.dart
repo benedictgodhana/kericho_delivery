@@ -3,7 +3,7 @@ import 'package:kericho_delivery/presentation/screens/splash_screen.dart';
 import 'package:kericho_delivery/presentation/screens/onboarding_screen.dart';
 import 'package:kericho_delivery/presentation/screens/auth/login_screen.dart';
 import 'package:kericho_delivery/presentation/screens/auth/register_screen.dart';
-import 'package:kericho_delivery/presentation/screens/home/home_screen.dart';
+import 'package:kericho_delivery/presentation/screens/home/home_screen.dart' hide ProfileScreen;
 import 'package:kericho_delivery/presentation/screens/merchant/merchant_screen.dart';
 import 'package:kericho_delivery/presentation/screens/cart/cart_screen.dart';
 import 'package:kericho_delivery/presentation/screens/order/order_tracking_screen.dart';
