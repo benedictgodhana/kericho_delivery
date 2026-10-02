@@ -3,21 +3,22 @@ import 'package:google_fonts/google_fonts.dart';
 import 'text_theme.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF00B14F);
-  static const Color secondaryColor = Color(0xFFFFD600);
-  static const Color accentColor = Color(0xFFFF6B00);
+  // KulaHub brand palette — tangerine (appetite + energy) on warm ink/cream
+  static const Color primaryColor = Color(0xFFFF5A36);
+  static const Color secondaryColor = Color(0xFFFFB020);
+  static const Color accentColor = Color(0xFF16181D);
   static const Color kerichoGreen = Color(0xFF1A5632);
   static const Color teaGreen = Color(0xFF8BC34A);
 
-  static const Color scaffoldBackground = Color(0xFFF8F9FA);
+  static const Color scaffoldBackground = Color(0xFFFFF8F1);
   static const Color cardColor = Colors.white;
-  static const Color textPrimary = Color(0xFF212529);
+  static const Color textPrimary = Color(0xFF16181D);
   static const Color textSecondary = Color(0xFF6C757D);
   static const Color textTertiary = Color(0xFFADB5BD);
 
-  static const Color successColor = Color(0xFF28A745);
+  static const Color successColor = Color(0xFF2EAD6C);
   static const Color warningColor = Color(0xFFFFC107);
-  static const Color errorColor = Color(0xFFDC3545);
+  static const Color errorColor = Color(0xFFE5484D);
   static const Color infoColor = Color(0xFF17A2B8);
 
   // Light Theme
@@ -27,7 +28,7 @@ class AppTheme {
     primarySwatch: createMaterialColor(primaryColor),
     scaffoldBackgroundColor: scaffoldBackground,
     cardColor: cardColor,
-    fontFamily: GoogleFonts.lexend().fontFamily,
+    fontFamily: GoogleFonts.afacad().fontFamily,
     
     textTheme: TextTheme(
       displayLarge: AppTextTheme.displayLarge.copyWith(color: textPrimary),
@@ -52,7 +53,7 @@ class AppTheme {
       foregroundColor: textPrimary,
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: GoogleFonts.lexend(
+      titleTextStyle: GoogleFonts.afacad(
         fontWeight: FontWeight.w700,
         fontSize: 18,
         color: textPrimary,

@@ -251,7 +251,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 children: [
                   Text(
                     'Order Status',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -328,7 +328,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 children: [
                   Text(
                     _getStatusText(status),
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 14,
                       fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                       color: isCurrent ? _getStatusColor(status) : Colors.grey[600],
@@ -338,7 +338,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       status != OrderStatus.cancelled)
                     Text(
                       'Estimated: ${_getEstimatedTime(status)}',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.afacad(
                         fontSize: 12,
                         color: Colors.grey[500],
                       ),
@@ -418,7 +418,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               children: [
                 Text(
                   rider.name,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.afacad(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -426,7 +426,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '${rider.vehicleType} • ${rider.vehiclePlate}',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.afacad(
                     fontSize: 14,
                     color: Colors.grey[600],
                   ),
@@ -442,14 +442,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     const SizedBox(width: 4),
                     Text(
                       rider.rating.toStringAsFixed(1),
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.afacad(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
                       ' • ${rider.totalDeliveries} deliveries',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.afacad(
                         fontSize: 14,
                         color: Colors.grey[600],
                       ),
@@ -502,7 +502,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         children: [
           Text(
             'Order Details',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.afacad(
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -519,14 +519,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     Expanded(
                       child: Text(
                         '${item.product.name} x${item.quantity}',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.afacad(
                           fontSize: 14,
                         ),
                       ),
                     ),
                     Text(
                       'KSh ${(item.product.price * item.quantity).toStringAsFixed(2)}',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.afacad(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -570,7 +570,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   order.paymentStatus == PaymentStatus.completed
                     ? 'Paid'
                     : 'Payment Pending',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.afacad(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: order.paymentStatus == PaymentStatus.completed
@@ -584,7 +584,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 order.paymentMethod == PaymentMethod.mpesa
                   ? 'M-Pesa'
                   : 'Cash on Delivery',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.afacad(
                   fontSize: 14,
                   color: Colors.grey[600],
                 ),
@@ -603,7 +603,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.afacad(
               fontSize: isTotal ? 16 : 14,
               fontWeight: isTotal ? FontWeight.w600 : FontWeight.w400,
               color: isTotal ? AppTheme.textPrimary : Colors.grey[600],
@@ -612,7 +612,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           const Spacer(),
           Text(
             'KSh ${amount.toStringAsFixed(2)}',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.afacad(
               fontSize: isTotal ? 18 : 14,
               fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
               color: isTotal ? AppTheme.primaryColor : AppTheme.textPrimary,

@@ -17,7 +17,7 @@ class MpesaService {
     required String phone,
     required double amount,
     required String accountReference,
-    String transactionDesc = 'Kericho Delivery',
+    String transactionDesc = 'KulaHub',
   }) async {
     // TODO: Implement actual M-Pesa STK Push
     await Future.delayed(const Duration(seconds: 2));

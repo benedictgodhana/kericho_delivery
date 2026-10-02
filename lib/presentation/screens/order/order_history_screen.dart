@@ -49,7 +49,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             const SizedBox(height: 16),
             Text(
               'No orders yet',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.afacad(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[600],
@@ -58,7 +58,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             const SizedBox(height: 8),
             Text(
               'Your order history will appear here',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.afacad(
                 fontSize: 14,
                 color: Colors.grey[500],
               ),
@@ -109,7 +109,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 Expanded(
                   child: Text(
                     'Order #${order.orderNumber}',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -123,7 +123,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   ),
                   child: Text(
                     _getStatusText(order.status),
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: _getStatusColor(order.status),
@@ -138,7 +138,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             // Order Date
             Text(
               _formatDate(order.createdAt),
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.afacad(
                 fontSize: 14,
                 color: Colors.grey[600],
               ),
@@ -149,7 +149,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             // Order Items Preview
             Text(
               _getItemsPreview(order),
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.afacad(
                 fontSize: 14,
               ),
               maxLines: 2,
@@ -164,7 +164,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 Expanded(
                   child: Text(
                     '${order.items.length} item${order.items.length > 1 ? 's' : ''}',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 14,
                       color: Colors.grey[600],
                     ),
@@ -172,7 +172,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
                 Text(
                   'KSh ${order.totalAmount.toStringAsFixed(2)}',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.afacad(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryColor,
@@ -279,7 +279,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 children: [
                   Text(
                     'How was your experience?',
-                    style: GoogleFonts.poppins(),
+                    style: GoogleFonts.afacad(),
                   ),
                   const SizedBox(height: 16),
                   

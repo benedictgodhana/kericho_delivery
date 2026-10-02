@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
 import 'package:kericho_delivery/core/theme/app_theme.dart';
-import 'package:kericho_delivery/core/constants/app_icons.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -138,13 +137,12 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Custom Icon with delivery effect
+                            // Brand logo badge
                             Container(
-                              width: 120,
-                              height: 120,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(60),
+                                color: Colors.white.withOpacity(0.95),
+                                borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.3),
@@ -153,73 +151,19 @@ class _SplashScreenState extends State<SplashScreen>
                                   ),
                                 ],
                               ),
-                              child: Stack(
-                                children: [
-                                  Center(
-                                    child: Image.asset(
-                                      AppIcons.shopping,
-                                      width: 70,
-                                      height: 70,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  // Delivery effect
-                                  Positioned(
-                                    bottom: 12,
-                                    right: 12,
-                                    child: Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.secondaryColor,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: AppTheme.secondaryColor.withOpacity(0.5),
-                                            blurRadius: 8,
-                                          ),
-                                        ],
-                                      ),
-                                      child: Image.asset(
-                                        AppIcons.deliveryMan,
-                                        width: 18,
-                                        height: 18,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              child: Image.asset(
+                                'assets/images/KulaHub_logo-removebg-preview.png',
+                                height: 160,
+                                fit: BoxFit.contain,
                               ),
                             ),
                             
-                            const SizedBox(height: 40),
-                            
-                            // Main Title
-                            Text(
-                              'Fresh Pizza',
-                              style: GoogleFonts.lexend(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.1,
-                                letterSpacing: -0.5,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black.withOpacity(0.5),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 32),
                             
                             // Subtitle 1
                             Text(
-                              'Delivered Fast with',
-                              style: GoogleFonts.lexend(
+                              'Your City\'s Kitchens,',
+                              style: GoogleFonts.afacad(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white.withOpacity(0.9),
@@ -237,8 +181,8 @@ class _SplashScreenState extends State<SplashScreen>
                             
                             // Subtitle 2 with accent color
                             Text(
-                              'Just One Click!',
-                              style: GoogleFonts.lexend(
+                              'All In One App',
+                              style: GoogleFonts.afacad(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.primaryColor,
@@ -262,8 +206,8 @@ class _SplashScreenState extends State<SplashScreen>
                               child: Column(
                                 children: [
                                   Text(
-                                    'Your Ultimate App for',
-                                    style: GoogleFonts.lexend(
+                                    'One Marketplace.',
+                                    style: GoogleFonts.afacad(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w300,
                                       color: Colors.white.withOpacity(0.8),
@@ -273,8 +217,8 @@ class _SplashScreenState extends State<SplashScreen>
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Every Craving',
-                                    style: GoogleFonts.lexend(
+                                    'Many Food Businesses.',
+                                    style: GoogleFonts.afacad(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
@@ -289,8 +233,8 @@ class _SplashScreenState extends State<SplashScreen>
                             const SizedBox(height: 8),
                             
                             Text(
-                              'Any Pizza, Anytime.',
-                              style: GoogleFonts.lexend(
+                              'One seamless ordering experience.',
+                              style: GoogleFonts.afacad(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white.withOpacity(0.8),
@@ -344,7 +288,7 @@ class _SplashScreenState extends State<SplashScreen>
                                         children: [
                                           Text(
                                             'Get Started',
-                                            style: GoogleFonts.lexend(
+                                            style: GoogleFonts.afacad(
                                               fontSize: 20,
                                               fontWeight: FontWeight.w700,
                                               color: Colors.white,
@@ -382,8 +326,8 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'Preparing your pizza experience...',
-                                  style: GoogleFonts.lexend(
+                                  'Finding the best bites near you...',
+                                  style: GoogleFonts.afacad(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w300,
                                     color: Colors.white.withOpacity(0.7),

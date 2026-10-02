@@ -1,13 +1,25 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kericho_delivery/data/models/cart_model.dart';
 import 'package:kericho_delivery/data/models/product_model.dart';
 import 'package:provider/provider.dart';
 import 'package:kericho_delivery/presentation/providers/merchant_provider.dart';
 import 'package:kericho_delivery/presentation/providers/app_provider.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
-import 'package:kericho_delivery/core/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
+// KulaHub brand palette (matches home/menu/cart/rewards screens)
+const Color kPrimaryColor = Color(0xFFFF5A36);
+const Color kSecondaryColor = Color(0xFFFFB020);
+const Color kBackgroundColor = Color(0xFFFFF8F1);
+const Color kCardColor = Colors.white;
+const Color kTextPrimary = Color(0xFF16181D);
+const Color kTextSecondary = Color(0xFF6C757D);
+const Color kBorderColor = Color(0xFFF0E4D8);
+const Color kSuccessColor = Color(0xFF2EAD6C);
+const Color kErrorColor = Color(0xFFE5484D);
 
 class MerchantScreen extends StatefulWidget {
   final String merchantId;
@@ -26,34 +38,42 @@ class MerchantScreen extends StatefulWidget {
 class _MerchantScreenState extends State<MerchantScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'All';
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MerchantProvider>(context, listen: false)
-        .selectMerchant(widget.merchantId);
+          .selectMerchant(widget.merchantId);
     });
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _addToCart(ProductModel product) {
+    HapticFeedback.mediumImpact();
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    
-    appProvider.addToCart(CartItem(
-      product: product,
-      quantity: 1,
-    ));
-    
-    // Show success snackbar
+    appProvider.addToCart(CartItem(product: product, quantity: 1));
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${product.name} added to cart'),
-        duration: const Duration(seconds: 2),
+        content: Text('${product.name} added to cart', style: GoogleFonts.afacad(color: Colors.white)),
+        backgroundColor: kSuccessColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
 
   void _navigateToCart() {
+    HapticFeedback.mediumImpact();
     AppRouter.pushNamed(AppRouter.cart);
   }
 
@@ -65,519 +85,432 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
     if (merchant == null || merchantProvider.isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text(widget.merchantName)),
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: kBackgroundColor,
+        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(kPrimaryColor))),
       );
     }
 
-    // Get unique categories from products
-    final categories = ['All', ...merchantProvider.merchantProducts
-      .map((p) => p.category)
-      .toSet()
-      .toList()];
+    final categories = [
+      'All',
+      ...merchantProvider.merchantProducts.map((p) => p.category).toSet(),
+    ];
 
-    // Filter products by selected category
-    final filteredProducts = _selectedCategory == 'All'
-        ? merchantProvider.merchantProducts
-        : merchantProvider.merchantProducts
-            .where((p) => p.category == _selectedCategory)
-            .toList();
+    final filteredProducts = merchantProvider.merchantProducts.where((p) {
+      final matchesCategory = _selectedCategory == 'All' || p.category == _selectedCategory;
+      final matchesSearch = _searchQuery.isEmpty ||
+          p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          p.description.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }).toList();
 
     return Scaffold(
+      backgroundColor: kBackgroundColor,
       body: CustomScrollView(
         slivers: [
-          // App Bar
-          SliverAppBar(
-            expandedHeight: 200,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: merchant.imageUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: merchant.imageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[200],
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.store, size: 60, color: Colors.grey),
-                      ),
-                    )
-                  : Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.store, size: 60, color: Colors.grey),
-                    ),
-              title: Text(
-                merchant.name,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withOpacity(0.5),
-                      blurRadius: 4,
-                      offset: const Offset(1, 1),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              // Cart with badge
-              Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                    onPressed: _navigateToCart,
-                  ),
-                  if (appProvider.cartItemCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          appProvider.cartItemCount > 9 
-                            ? '9+' 
-                            : appProvider.cartItemCount.toString(),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-
-          // Merchant Details
+          SliverToBoxAdapter(child: _buildHeaderImage(merchant.imageUrl)),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Rating and Status
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: merchant.isOpen 
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              merchant.isOpen 
-                                ? Icons.circle
-                                : Icons.circle_outlined,
-                              size: 12,
-                              color: merchant.isOpen ? Colors.green : Colors.red,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              merchant.isOpen ? 'Open Now' : 'Closed',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: merchant.isOpen ? Colors.green : Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      Row(
-                        children: [
-                          Icon(Icons.star, size: 16, color: Colors.amber),
-                          const SizedBox(width: 4),
-                          Text(
-                            merchant.rating.toStringAsFixed(1),
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            ' (${merchant.ratingCount})',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Description
+                  _buildTitleRow(merchant),
+                  const SizedBox(height: 10),
                   Text(
                     merchant.description,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: AppTheme.textSecondary,
-                      height: 1.5,
-                    ),
+                    style: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary, height: 1.4),
                   ),
-
                   const SizedBox(height: 16),
-
-                  // Details Grid
-                  GridView.count(
-                    crossAxisCount: 3,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 2.5,
-                    children: [
-                      _buildDetailItem(
-                        Icons.timer,
-                        '${merchant.deliveryTime} min',
-                        'Delivery',
-                      ),
-                      _buildDetailItem(
-                        Icons.local_shipping,
-                        'KSh ${merchant.deliveryFee.toInt()}',
-                        'Fee',
-                      ),
-                      _buildDetailItem(
-                        Icons.attach_money,
-                        'KSh ${merchant.minimumOrder.toInt()}',
-                        'Min order',
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Address
+                  _buildDetailChips(merchant),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
-                      Icon(
-                        Icons.location_on,
-                        size: 20,
-                        color: AppTheme.textSecondary,
-                      ),
-                      const SizedBox(width: 8),
+                      Icon(CupertinoIcons.location_solid, size: 16, color: kTextSecondary),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           merchant.address ?? 'Kericho, Kenya',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: AppTheme.textSecondary,
-                          ),
+                          style: GoogleFonts.afacad(fontSize: 13, color: kTextSecondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Search Bar
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search menu items...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        // TODO: Implement search within merchant
-                      },
-                    ),
-                  ),
-
+                  const SizedBox(height: 20),
+                  _buildSearchField(),
                   const SizedBox(height: 16),
-
-                  // Category Filter
-                  SizedBox(
-                    height: 40,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: categories.map((category) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(category),
-                            selected: _selectedCategory == category,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedCategory = category;
-                              });
-                            },
-                            selectedColor: AppTheme.primaryColor,
-                            labelStyle: GoogleFonts.poppins(
-                              color: _selectedCategory == category
-                                  ? Colors.white
-                                  : AppTheme.textPrimary,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                  _buildCategoryChips(categories),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
           ),
-
-          // Products Grid
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: filteredProducts.isEmpty
-                ? SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.fastfood_outlined,
-                            size: 80,
-                            color: Colors.grey[300],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No items found',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Try a different category',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
+                ? SliverToBoxAdapter(child: _buildEmptyState())
                 : SliverGrid(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.72,
                     ),
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final product = filteredProducts[index];
-                        return _buildProductCard(product);
-                      },
+                      (context, index) => _buildProductCard(filteredProducts[index]),
                       childCount: filteredProducts.length,
                     ),
                   ),
           ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          SliverToBoxAdapter(child: SizedBox(height: appProvider.cartItemCount > 0 ? 110 : 24)),
         ],
       ),
-
-      // Floating Action Button for Cart
-      floatingActionButton: appProvider.cartItemCount > 0
-          ? FloatingActionButton.extended(
-              onPressed: _navigateToCart,
-              backgroundColor: AppTheme.primaryColor,
-              label: Row(
-                children: [
-                  Text(
-                    '${appProvider.cartItemCount} items',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'KSh ${appProvider.cartTotal.toStringAsFixed(2)}',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              icon: const Icon(Icons.shopping_cart, color: Colors.white),
-            )
-          : null,
+      floatingActionButton: appProvider.cartItemCount > 0 ? _buildCartBar(appProvider) : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  Widget _buildDetailItem(IconData icon, String value, String label) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildHeaderImage(String? imageUrl) {
+    return Stack(
       children: [
-        Icon(icon, size: 20, color: AppTheme.primaryColor),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+        Container(
+          height: 220,
+          width: double.infinity,
+          color: kBorderColor,
+          child: imageUrl != null
+              ? CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: kBorderColor),
+                  errorWidget: (context, url, error) => _buildHeaderPlaceholder(),
+                )
+              : _buildHeaderPlaceholder(),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            height: 70,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.35)],
+              ),
+            ),
           ),
         ),
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: AppTheme.textSecondary,
+        Positioned(
+          top: 48,
+          left: 20,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              child: const Icon(CupertinoIcons.back, color: kTextPrimary, size: 20),
+            ),
           ),
         ),
       ],
     );
   }
 
+  Widget _buildHeaderPlaceholder() {
+    return Container(
+      color: kBorderColor,
+      child: Icon(CupertinoIcons.bag_fill, size: 56, color: kTextSecondary.withValues(alpha: 0.5)),
+    );
+  }
+
+  Widget _buildTitleRow(merchant) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            merchant.name,
+            style: GoogleFonts.afacad(fontSize: 24, fontWeight: FontWeight.w800, color: kTextPrimary, letterSpacing: -0.3),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: (merchant.isOpen ? kSuccessColor : kErrorColor).withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.circle_fill, size: 8, color: merchant.isOpen ? kSuccessColor : kErrorColor),
+              const SizedBox(width: 6),
+              Text(
+                merchant.isOpen ? 'Open' : 'Closed',
+                style: GoogleFonts.afacad(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: merchant.isOpen ? kSuccessColor : kErrorColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailChips(merchant) {
+    return Row(
+      children: [
+        _buildDetailChip(CupertinoIcons.star_fill, '${merchant.rating.toStringAsFixed(1)} (${merchant.ratingCount})', kSecondaryColor),
+        const SizedBox(width: 8),
+        _buildDetailChip(CupertinoIcons.clock, '${merchant.deliveryTime} min', kTextSecondary),
+        const SizedBox(width: 8),
+        _buildDetailChip(
+          CupertinoIcons.car_detailed,
+          merchant.deliveryFee == 0 ? 'Free' : 'KSh ${merchant.deliveryFee.toInt()}',
+          kTextSecondary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailChip(IconData icon, String label, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          color: kCardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: kBorderColor, width: 1),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.afacad(fontSize: 11.5, fontWeight: FontWeight.w700, color: kTextPrimary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: kCardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: kBorderColor, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 14),
+          Icon(CupertinoIcons.search, color: kTextSecondary, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _searchQuery = value),
+              style: GoogleFonts.afacad(color: kTextPrimary, fontSize: 15),
+              decoration: InputDecoration(
+                hintText: 'Search menu items...',
+                hintStyle: GoogleFonts.afacad(color: kTextSecondary, fontSize: 15),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChips(List<String> categories) {
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = category == _selectedCategory;
+          return Padding(
+            padding: EdgeInsets.only(right: index < categories.length - 1 ? 10 : 0),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => _selectedCategory = category);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected ? kPrimaryColor : kCardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: isSelected ? kPrimaryColor : kBorderColor, width: 1.2),
+                ),
+                child: Text(
+                  category,
+                  style: GoogleFonts.afacad(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : kTextSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          Icon(CupertinoIcons.search, size: 44, color: kTextSecondary),
+          const SizedBox(height: 16),
+          Text('No items found', style: GoogleFonts.afacad(fontSize: 18, fontWeight: FontWeight.w700, color: kTextPrimary)),
+          const SizedBox(height: 8),
+          Text('Try a different category', style: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProductCard(ProductModel product) {
     return GestureDetector(
-      onTap: () {
-        _showProductDetails(product);
-      },
+      onTap: () => _showProductDetails(product),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: kCardColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: kBorderColor, width: 1),
           boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              child: Container(
-                height: 120,
-                width: double.infinity,
-                color: Colors.grey[200],
-                child: product.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: product.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        errorWidget: (context, url, error) => const Icon(
-                          Icons.fastfood,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.fastfood,
-                        size: 40,
-                        color: Colors.grey,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                  child: Container(
+                    height: 100,
+                    width: double.infinity,
+                    color: kBackgroundColor,
+                    child: product.imageUrl != null
+                        ? (product.imageUrl!.startsWith('http')
+                            ? CachedNetworkImage(
+                                imageUrl: product.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorWidget: (context, url, error) => Icon(CupertinoIcons.cube_box, color: kTextSecondary),
+                              )
+                            : Image.asset(product.imageUrl!, fit: BoxFit.cover))
+                        : Icon(CupertinoIcons.cube_box, color: kTextSecondary),
+                  ),
+                ),
+                Positioned(
+                  right: 10,
+                  bottom: -14,
+                  child: GestureDetector(
+                    onTap: () => _addToCart(product),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: kPrimaryColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(color: kPrimaryColor.withValues(alpha: 0.35), blurRadius: 6, offset: const Offset(0, 2)),
+                        ],
                       ),
-              ),
+                      child: const Icon(CupertinoIcons.add, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ],
             ),
-
-            // Product Details
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     product.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
+                    style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w700, color: kTextPrimary),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-
                   const SizedBox(height: 4),
-
                   Text(
                     product.description,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
+                    style: GoogleFonts.afacad(fontSize: 12, color: kTextSecondary, height: 1.3),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-
                   const SizedBox(height: 8),
-
-                  // Price and Add Button
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'KSh ${product.price.toStringAsFixed(2)}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.add,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          onPressed: () => _addToCart(product),
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'KSh ${product.price.toStringAsFixed(0)}',
+                    style: GoogleFonts.afacad(fontSize: 13.5, fontWeight: FontWeight.w700, color: kPrimaryColor),
                   ),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCartBar(AppProvider appProvider) {
+    return GestureDetector(
+      onTap: _navigateToCart,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: kPrimaryColor,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(color: kPrimaryColor.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+              child: const Icon(CupertinoIcons.cart_fill, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              '${appProvider.cartItemCount} item${appProvider.cartItemCount > 1 ? 's' : ''}',
+              style: GoogleFonts.afacad(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            const Spacer(),
+            Text(
+              'KSh ${appProvider.cartTotal.toStringAsFixed(0)}',
+              style: GoogleFonts.afacad(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+            ),
+            const SizedBox(width: 6),
+            const Icon(CupertinoIcons.arrow_right, color: Colors.white, size: 18),
           ],
         ),
       ),
@@ -594,20 +527,21 @@ class _MerchantScreenState extends State<MerchantScreen> {
           product: product,
           onAddToCart: (quantity, specialInstructions, selectedOptions) {
             final appProvider = Provider.of<AppProvider>(context, listen: false);
-            
             appProvider.addToCart(CartItem(
               product: product,
               quantity: quantity,
               specialInstructions: specialInstructions,
               selectedOptions: selectedOptions,
             ));
-            
             Navigator.pop(context);
-            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('${product.name} added to cart'),
-                duration: const Duration(seconds: 2),
+                content: Text('${product.name} added to cart', style: GoogleFonts.afacad(color: Colors.white)),
+                backgroundColor: kSuccessColor,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                margin: const EdgeInsets.all(16),
+                duration: const Duration(seconds: 1),
               ),
             );
           },
@@ -640,299 +574,235 @@ class _ProductDetailsSheetState extends State<ProductDetailsSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
+        color: kCardColor,
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, 14, 20, MediaQuery.of(context).viewInsets.bottom + 20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image
             Center(
               child: Container(
-                width: 200,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: widget.product.imageUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: CachedNetworkImage(
-                          imageUrl: widget.product.imageUrl!,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.fastfood,
-                        size: 60,
-                        color: Colors.grey,
-                      ),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: kBorderColor, borderRadius: BorderRadius.circular(2)),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Product Name
+            const SizedBox(height: 18),
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: 180,
+                  height: 140,
+                  color: kBackgroundColor,
+                  child: widget.product.imageUrl != null
+                      ? (widget.product.imageUrl!.startsWith('http')
+                          ? CachedNetworkImage(imageUrl: widget.product.imageUrl!, fit: BoxFit.cover)
+                          : Image.asset(widget.product.imageUrl!, fit: BoxFit.cover))
+                      : Icon(CupertinoIcons.cube_box, size: 48, color: kTextSecondary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
             Text(
               widget.product.name,
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-              ),
+              style: GoogleFonts.afacad(fontSize: 22, fontWeight: FontWeight.w800, color: kTextPrimary),
             ),
-
             const SizedBox(height: 8),
-
-            // Description
             Text(
               widget.product.description,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
+              style: GoogleFonts.afacad(fontSize: 14.5, color: kTextSecondary, height: 1.4),
             ),
-
-            const SizedBox(height: 16),
-
-            // Price
+            const SizedBox(height: 14),
             Text(
-              'KSh ${widget.product.price.toStringAsFixed(2)}',
-              style: GoogleFonts.poppins(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor,
-              ),
+              'KSh ${widget.product.price.toStringAsFixed(0)}',
+              style: GoogleFonts.afacad(fontSize: 24, fontWeight: FontWeight.w800, color: kPrimaryColor),
             ),
-
-            const SizedBox(height: 24),
-
-            // Options
-            if (widget.product.options != null && widget.product.options!.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Options',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...widget.product.options!.map((option) {
-                    return _buildOptionSection(option);
-                  }).toList(),
-                  const SizedBox(height: 16),
-                ],
+            const SizedBox(height: 20),
+            if (widget.product.options != null && widget.product.options!.isNotEmpty) ...[
+              Text('Options', style: GoogleFonts.afacad(fontSize: 15, fontWeight: FontWeight.w800, color: kTextPrimary)),
+              const SizedBox(height: 10),
+              ...widget.product.options!.map(_buildOptionSection),
+              const SizedBox(height: 10),
+            ],
+            if (widget.product.addons != null && widget.product.addons!.isNotEmpty) ...[
+              Text('Add-ons', style: GoogleFonts.afacad(fontSize: 15, fontWeight: FontWeight.w800, color: kTextPrimary)),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: widget.product.addons!.map((addon) {
+                  final isSelected = _selectedOptions['addons']?.contains(addon) ?? false;
+                  return _buildChoiceChip(
+                    label: addon,
+                    isSelected: isSelected,
+                    onTap: () {
+                      setState(() {
+                        final current = _selectedOptions['addons'] ?? [];
+                        if (isSelected) {
+                          current.remove(addon);
+                        } else {
+                          _selectedOptions['addons'] = [...current, addon];
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
               ),
-
-            // Addons
-            if (widget.product.addons != null && widget.product.addons!.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Add-ons',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...widget.product.addons!.map((addon) {
-                    return CheckboxListTile(
-                      title: Text(addon),
-                      value: _selectedOptions['addons']?.contains(addon) ?? false,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedOptions['addons'] = [
-                              ..._selectedOptions['addons'] ?? [],
-                              addon,
-                            ];
-                          } else {
-                            _selectedOptions['addons']?.remove(addon);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
-                  const SizedBox(height: 16),
-                ],
+              const SizedBox(height: 16),
+            ],
+            Container(
+              decoration: BoxDecoration(
+                color: kBackgroundColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: kBorderColor, width: 1.2),
               ),
-
-            // Special Instructions
-            TextField(
-              onChanged: (value) => _specialInstructions = value,
-              decoration: InputDecoration(
-                labelText: 'Special Instructions',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+              child: TextField(
+                onChanged: (value) => _specialInstructions = value,
+                style: GoogleFonts.afacad(fontSize: 14, color: kTextPrimary),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Special instructions (optional)',
+                  hintStyle: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(14),
                 ),
               ),
-              maxLines: 3,
             ),
-
-            const SizedBox(height: 24),
-
-            // Quantity and Add Button
+            const SizedBox(height: 22),
             Row(
               children: [
-                // Quantity Selector
                 Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration: BoxDecoration(color: kBackgroundColor, borderRadius: BorderRadius.circular(20)),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: _quantity > 1
-                            ? () {
-                                setState(() => _quantity--);
-                              }
-                            : null,
+                      _buildStepperButton(
+                        icon: CupertinoIcons.minus,
+                        onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
                       ),
                       SizedBox(
-                        width: 40,
+                        width: 32,
                         child: Text(
-                          _quantity.toString(),
+                          '$_quantity',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w700, color: kTextPrimary),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          setState(() => _quantity++);
-                        },
+                      _buildStepperButton(
+                        icon: CupertinoIcons.add,
+                        onTap: () => setState(() => _quantity++),
                       ),
                     ],
                   ),
                 ),
-
-                const Spacer(),
-
-                // Add to Cart Button
+                const SizedBox(width: 14),
                 Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final selectedOptionsList = _selectedOptions.values
-                        .expand((list) => list)
-                        .toList();
-                      
+                  child: GestureDetector(
+                    onTap: () {
+                      final selectedOptionsList = _selectedOptions.values.expand((list) => list).toList();
                       widget.onAddToCart(
                         _quantity,
                         _specialInstructions,
                         selectedOptionsList.isEmpty ? null : selectedOptionsList,
                       );
                     },
-                    style: ElevatedButton.styleFrom(
+                    child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      decoration: BoxDecoration(
+                        color: kPrimaryColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(color: kPrimaryColor.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 5)),
+                        ],
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.add_shopping_cart),
-                        const SizedBox(width: 8),
-                        Text(
+                      child: Center(
+                        child: Text(
                           'Add to Cart',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: GoogleFonts.afacad(fontSize: 15.5, fontWeight: FontWeight.w700, color: Colors.white),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOptionSection(ProductOption option) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          option.name,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+  Widget _buildStepperButton({required IconData icon, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        child: Icon(icon, size: 16, color: onTap == null ? kTextSecondary.withValues(alpha: 0.4) : kPrimaryColor),
+      ),
+    );
+  }
+
+  Widget _buildChoiceChip({required String label, required bool isSelected, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? kPrimaryColor : kBackgroundColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: isSelected ? kPrimaryColor : kBorderColor, width: 1.2),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.afacad(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.white : kTextSecondary,
           ),
         ),
-        const SizedBox(height: 8),
-        
-        if (option.isMultiple)
-          // Multiple selection
+      ),
+    );
+  }
+
+  Widget _buildOptionSection(ProductOption option) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(option.name, style: GoogleFonts.afacad(fontSize: 13.5, fontWeight: FontWeight.w700, color: kTextPrimary)),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: option.choices.map((choice) {
               final isSelected = _selectedOptions[option.name]?.contains(choice) ?? false;
-              return ChoiceChip(
-                label: Text(choice),
-                selected: isSelected,
-                onSelected: (selected) {
+              return _buildChoiceChip(
+                label: choice,
+                isSelected: isSelected,
+                onTap: () {
                   setState(() {
-                    if (selected) {
-                      _selectedOptions[option.name] = [
-                        ..._selectedOptions[option.name] ?? [],
-                        choice,
-                      ];
+                    if (option.isMultiple) {
+                      final current = _selectedOptions[option.name] ?? [];
+                      if (isSelected) {
+                        current.remove(choice);
+                      } else {
+                        _selectedOptions[option.name] = [...current, choice];
+                      }
                     } else {
-                      _selectedOptions[option.name]?.remove(choice);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          )
-        else
-          // Single selection
-          Wrap(
-            spacing: 8,
-            children: option.choices.map((choice) {
-              final isSelected = _selectedOptions[option.name]?.contains(choice) ?? false;
-              return ChoiceChip(
-                label: Text(choice),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedOptions[option.name] = [choice];
-                    } else {
-                      _selectedOptions[option.name]?.remove(choice);
+                      _selectedOptions[option.name] = isSelected ? [] : [choice];
                     }
                   });
                 },
               );
             }).toList(),
           ),
-        
-        const SizedBox(height: 16),
-      ],
+        ],
+      ),
     );
   }
 }

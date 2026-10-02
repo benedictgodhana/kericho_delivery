@@ -71,6 +71,57 @@ class AppProvider with ChangeNotifier {
     }
   }
 
+  // Mock phone directory simulating a backend lookup for OTP sign-in.
+  static const Set<String> _mockExistingPhones = {'712345678'};
+
+  bool isExistingPhone(String phone) => _mockExistingPhones.contains(phone);
+
+  Future<UserModel> loginWithPhone(String phone) async {
+    final user = UserModel(
+      id: 'u_$phone',
+      phone: phone,
+      fullName: 'KulaHub Customer',
+      userType: UserType.customer,
+      createdAt: DateTime.now(),
+      isVerified: true,
+    );
+    await loginUser(user);
+    return user;
+  }
+
+  Future<UserModel> registerCustomer({
+    required String fullName,
+    required String phone,
+    String? email,
+  }) async {
+    final user = UserModel(
+      id: 'u_$phone',
+      phone: phone,
+      email: email,
+      fullName: fullName,
+      userType: UserType.customer,
+      createdAt: DateTime.now(),
+      isVerified: true,
+    );
+    await loginUser(user);
+    return user;
+  }
+
+  Future<UserModel> loginWithGoogle() async {
+    await Future.delayed(const Duration(seconds: 1));
+    final user = UserModel(
+      id: 'u_google_demo',
+      phone: '712345678',
+      email: 'demo@kulahub.app',
+      fullName: 'Google User',
+      userType: UserType.customer,
+      createdAt: DateTime.now(),
+      isVerified: true,
+    );
+    await loginUser(user);
+    return user;
+  }
+
   Future<void> logout() async {
     _setLoading(true);
     try {

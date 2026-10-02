@@ -239,7 +239,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SizedBox(height: 8),
             Text(
               'Tap to change photo',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.afacad(
                 fontSize: 12,
                 color: AppTheme.textSecondary,
               ),
@@ -357,7 +357,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   Text(
                     'Account Actions',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -380,7 +380,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ListTile(
                     leading: const Icon(Icons.store, color: Colors.green),
                     title: const Text('Register as Merchant'),
-                    subtitle: const Text('List your business on Kericho Delivery'),
+                    subtitle: const Text('List your business on KulaHub'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       // TODO: Navigate to merchant registration
@@ -408,7 +408,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   Text(
                     'Danger Zone',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.red,
@@ -418,7 +418,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Text(
                     'Once you delete your account, there is no going back. '
                     'This action cannot be undone.',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 14,
                       color: Colors.red.withOpacity(0.8),
                     ),

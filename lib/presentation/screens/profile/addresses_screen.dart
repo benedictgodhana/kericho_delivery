@@ -267,7 +267,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
             const SizedBox(height: 16),
             Text(
               'Error Loading Addresses',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.afacad(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[700],
@@ -278,7 +278,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
                 _errorMessage!,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.afacad(
                   fontSize: 14,
                   color: Colors.grey[600],
                 ),
@@ -348,7 +348,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     children: [
                       Text(
                         'Current Location',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.afacad(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -357,7 +357,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                       Text(
                         locationProvider.currentLocation?.address ??
                             'Fetching location...',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.afacad(
                           fontSize: 12,
                           color: AppTheme.textSecondary,
                         ),
@@ -395,7 +395,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
           const SizedBox(height: 16),
           Text(
             'No saved addresses',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.afacad(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.grey[600],
@@ -404,7 +404,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
           const SizedBox(height: 8),
           Text(
             'Add your frequently used addresses',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.afacad(
               fontSize: 14,
               color: Colors.grey[500],
             ),
@@ -450,7 +450,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
             Expanded(
               child: Text(
                 address.title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.afacad(
                   fontWeight: FontWeight.w600,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -469,7 +469,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 ),
                 child: Text(
                   'Default',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.afacad(
                     fontSize: 10,
                     color: Colors.green,
                     fontWeight: FontWeight.w500,
@@ -480,7 +480,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
         ),
         subtitle: Text(
           address.address,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.afacad(
             fontSize: 12,
             color: AppTheme.textSecondary,
           ),

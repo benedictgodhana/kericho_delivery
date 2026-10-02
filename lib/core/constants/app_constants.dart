@@ -1,5 +1,6 @@
 class AppConstants {
-  static const String appName = 'Kericho Delivery';
+  static const String appName = 'KulaHub';
+  static const String appTagline = 'One marketplace. Many kitchens.';
   static const String appVersion = '1.0.0';
   
   // API Endpoints (replace with your actual backend URL)

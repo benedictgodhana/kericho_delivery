@@ -4,10 +4,21 @@ import 'package:kericho_delivery/presentation/screens/onboarding_screen.dart';
 import 'package:kericho_delivery/presentation/screens/auth/login_screen.dart';
 import 'package:kericho_delivery/presentation/screens/auth/register_screen.dart';
 import 'package:kericho_delivery/presentation/screens/home/home_screen.dart';
+import 'package:kericho_delivery/presentation/screens/menu/menu_screen.dart';
 import 'package:kericho_delivery/presentation/screens/merchant/merchant_screen.dart';
 import 'package:kericho_delivery/presentation/screens/cart/cart_screen.dart';
+import 'package:kericho_delivery/presentation/screens/order/order_history_screen.dart';
 import 'package:kericho_delivery/presentation/screens/order/order_tracking_screen.dart';
 import 'package:kericho_delivery/presentation/screens/profile/profile_screen.dart';
+import 'package:kericho_delivery/presentation/screens/profile/edit_profile_screen.dart';
+import 'package:kericho_delivery/presentation/screens/profile/addresses_screen.dart';
+import 'package:kericho_delivery/presentation/screens/account/favorites_screen.dart';
+import 'package:kericho_delivery/presentation/screens/account/payment_methods_screen.dart';
+import 'package:kericho_delivery/presentation/screens/account/notifications_screen.dart';
+import 'package:kericho_delivery/presentation/screens/account/promotions_screen.dart';
+import 'package:kericho_delivery/presentation/screens/account/help_support_screen.dart';
+import 'package:kericho_delivery/presentation/screens/account/settings_screen.dart';
+import 'package:kericho_delivery/presentation/screens/account/privacy_security_screen.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -18,12 +29,21 @@ class AppRouter {
   static const String login = '/login';
   static const String register = '/register';
   static const String home = '/home';
+  static const String menu = '/menu';
   static const String merchant = '/merchant';
   static const String cart = '/cart';
   static const String orderTracking = '/order-tracking';
   static const String profile = '/profile';
-
-  static String? orderHistory;
+  static const String orderHistory = '/order-history';
+  static const String editProfile = '/editProfile';
+  static const String addresses = '/addresses';
+  static const String favorites = '/favorites';
+  static const String paymentMethods = '/paymentMethods';
+  static const String notifications = '/notifications';
+  static const String promotions = '/promotions';
+  static const String help = '/help';
+  static const String settingsRoute = '/settings';
+  static const String privacy = '/privacy';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -37,6 +57,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
       case home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
+      case menu:
+        return MaterialPageRoute(builder: (_) => const MenuScreen());
       case merchant:
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
@@ -54,6 +76,29 @@ class AppRouter {
         );
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
+      case orderHistory:
+        return MaterialPageRoute(builder: (_) => const OrderHistoryScreen());
+      case editProfile:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          builder: (_) => EditProfileScreen(user: args?['user']),
+        );
+      case addresses:
+        return MaterialPageRoute(builder: (_) => const AddressesScreen());
+      case favorites:
+        return MaterialPageRoute(builder: (_) => const FavoritesScreen());
+      case paymentMethods:
+        return MaterialPageRoute(builder: (_) => const PaymentMethodsScreen());
+      case notifications:
+        return MaterialPageRoute(builder: (_) => const NotificationsScreen());
+      case promotions:
+        return MaterialPageRoute(builder: (_) => const PromotionsScreen());
+      case help:
+        return MaterialPageRoute(builder: (_) => const HelpSupportScreen());
+      case settingsRoute:
+        return MaterialPageRoute(builder: (_) => const SettingsScreen());
+      case privacy:
+        return MaterialPageRoute(builder: (_) => const PrivacySecurityScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

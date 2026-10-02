@@ -1,8 +1,9 @@
-// ignore_for_file: depend_on_referenced_packages
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:kericho_delivery/presentation/providers/app_provider.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
-import 'package:kericho_delivery/core/theme/app_theme.dart';
+import 'package:kericho_delivery/presentation/screens/auth/otp_verification_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
@@ -14,11 +15,16 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // KulaHub brand palette (matches home/cart/profile/settings screens)
+  static const Color kPrimaryColor = Color(0xFFFF5A36);
+  static const Color kPrimaryDark = Color(0xFFC73F22);
+  static const Color kBorderColor = Color(0xFFF0E4D8);
+  static const Color kTextPrimary = Color(0xFF16181D);
+  static const Color kTextSecondary = Color(0xFF6C757D);
+
   final _formKey = GlobalKey<FormBuilderState>();
   bool _isLoading = false;
-  bool _obscurePassword = true;
 
-  // Custom validators
   String? _phoneValidator(String? value) {
     if (value == null || value.isEmpty) {
       return 'Phone number is required';
@@ -30,577 +36,266 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  String? _passwordValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
-  }
-
-  void _login() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final formData = _formKey.currentState!.value;
-      final phone = formData['phone'];
-      final password = formData['password'];
-
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isLoading = false);
+  // Returns control to wherever auth was requested from, falling back to
+  // Home only when there is nothing to return to (e.g. fresh onboarding).
+  void _completeAuth() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop(true);
+    } else {
       AppRouter.pushNamedAndRemoveUntil(AppRouter.home);
     }
   }
 
-  void _loginWithGoogle() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isLoading = false);
-    AppRouter.pushNamedAndRemoveUntil(AppRouter.home);
+  void _continue() async {
+    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
+    final phone = _formKey.currentState!.value['phone'] as String;
+
+    final verified = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => OtpVerificationScreen(phone: phone)),
+    );
+
+    if (verified == true && mounted) {
+      _completeAuth();
+    }
   }
 
-  void _goToRegister() {
-    AppRouter.pushNamed(AppRouter.register);
+  void _continueWithGoogle() async {
+    setState(() => _isLoading = true);
+    await context.read<AppProvider>().loginWithGoogle();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    _completeAuth();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Header with curved image
-          SliverAppBar(
-            backgroundColor: Colors.transparent,
-            expandedHeight: screenHeight * 0.38,
-            floating: false,
-            pinned: false,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Responsive, scrollable image
-                  ClipPath(
-                    clipper: _CurvedBottomClipper(),
-                    child: Container(
-                      height: screenHeight * 0.4,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.asset(
-                            'assets/images/portrait-young-african-guy-accepts-order-by-phone-motorbike-holding-boxes-with-pizza-sit-his-bike-urban-place.jpg',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: AppTheme.primaryColor,
-                              );
-                            },
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.5),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  // Title and welcome text
-                  Positioned(
-                    bottom: 60,
-                    left: 0,
-                    right: 0,
-                    child: Column(
-                      children: [
-                        Text(
-                          'Welcome Back',
-                          style: GoogleFonts.lexend(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                            shadows: [
-                              const Shadow(
-                                color: Colors.black,
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Sign in to continue your journey',
-                          style: GoogleFonts.lexend(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            shadows: [
-                              const Shadow(
-                                color: Colors.black,
-                                blurRadius: 6,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+      backgroundColor: kPrimaryColor,
+      body: Column(
+        children: [
+          Expanded(flex: 38, child: _buildTopPanel()),
+          Expanded(flex: 62, child: _buildFormSheet()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopPanel() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [kPrimaryColor, kPrimaryDark],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -60,
+            top: -40,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
             ),
           ),
-          
-          // Login form
-          SliverToBoxAdapter(
+          Positioned(
+            left: -50,
+            bottom: -70,
             child: Container(
-              margin: const EdgeInsets.only(top: 20),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Form Title
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      'Login to your account',
-                      style: GoogleFonts.lexend(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey[900],
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                        child: const Icon(CupertinoIcons.back, color: Colors.white, size: 19),
                       ),
                     ),
                   ),
-                  
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 32),
-                    child: Text(
-                      'Enter your credentials to access your account',
-                      style: GoogleFonts.lexend(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey[600],
+                ),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 6)),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/images/KulaHub_logo-removebg-preview.png',
+                        height: 46,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
-                  
-                  // Login Form
-                  FormBuilder(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        // Phone Number Field
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 20),
-                          child: FormBuilderTextField(
-                            name: 'phone',
-                            decoration: InputDecoration(
-                              labelText: 'Phone Number',
-                              labelStyle: GoogleFonts.lexend(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
-                                fontSize: 14,
-                              ),
-                              hintText: '7XX XXX XXX',
-                              hintStyle: GoogleFonts.lexend(
-                                color: Colors.grey[500],
-                              ),
-                              prefixIcon: Container(
-                                margin: const EdgeInsets.only(right: 12),
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '+254',
-                                      style: GoogleFonts.lexend(
-                                        color: Colors.grey[800],
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      width: 1.5,
-                                      height: 24,
-                                      color: Colors.grey[300],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                            ),
-                            style: GoogleFonts.lexend(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                              color: Colors.grey[900],
-                            ),
-                            keyboardType: TextInputType.phone,
-                            validator: (value) => _phoneValidator(value),
-                          ),
-                        ),
-                        
-                        // Password Field
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: FormBuilderTextField(
-                            name: 'password',
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              labelStyle: GoogleFonts.lexend(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
-                                fontSize: 14,
-                              ),
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                child: Image.asset(
-                                  'assets/icons/padlock.png',
-                                  width: 20,
-                                  height: 20,
-                                  color: Colors.grey[600],
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      Icons.lock_outline_rounded,
-                                      size: 20,
-                                      color: Colors.grey[600],
-                                    );
-                                  },
-                                ),
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Image.asset(
-                                  _obscurePassword
-                                      ? 'assets/icons/hidden.png'
-                                      : 'assets/icons/eye.png',
-                                  width: 20,
-                                  height: 20,
-                                  color: Colors.grey[600],
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off_rounded
-                                          : Icons.visibility_rounded,
-                                      size: 20,
-                                      color: Colors.grey[600],
-                                    );
-                                  },
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                            ),
-                            style: GoogleFonts.lexend(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                              color: Colors.grey[900],
-                            ),
-                            obscureText: _obscurePassword,
-                            validator: (value) => _passwordValidator(value),
-                          ),
-                        ),
-                        
-                        // Forgot Password
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              // TODO: Implement forgot password
-                            },
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                            ),
-                            child: Text(
-                              'Forgot Password?',
-                              style: GoogleFonts.lexend(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 8),
-                        
-                        // Login Button with custom icon
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _login,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: _isLoading
-                                ? SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Image.asset(
-                                        'assets/icons/log-in.png',
-                                        width: 20,
-                                        height: 20,
-                                        color: Colors.white,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Icon(
-                                            Icons.login_rounded,
-                                            size: 20,
-                                            color: Colors.white,
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'Sign In',
-                                        style: GoogleFonts.lexend(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Divider with "or"
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                color: Colors.grey[300],
-                                thickness: 1,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                'or continue with',
-                                style: GoogleFonts.lexend(
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                color: Colors.grey[300],
-                                thickness: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Google Login Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: OutlinedButton(
-                            onPressed: _isLoading ? null : _loginWithGoogle,
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.grey[800],
-                              side: BorderSide(
-                                color: Colors.grey[300]!,
-                                width: 1,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    color: Colors.white,
-                                  ),
-                                  child: Center(
-                                    child: Image.asset(
-                                      'assets/icons/google.png',
-                                      width: 20,
-                                      height: 20,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Text(
-                                          'G',
-                                          style: GoogleFonts.lexend(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.red,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Continue with Google',
-                                  style: GoogleFonts.lexend(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey[800],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 40),
-                        
-                        // Register Option
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: GoogleFonts.lexend(
-                                color: Colors.grey[700],
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: _goToRegister,
-                              child: Text(
-                                'Sign Up',
-                                style: GoogleFonts.lexend(
-                                  color: AppTheme.primaryColor,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Terms and Privacy
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Text(
-                            'By continuing, you agree to our Terms of Service and Privacy Policy',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.lexend(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.grey[600],
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
 
-// Custom clipper for curved bottom edge
-class _CurvedBottomClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, 0);
-    path.lineTo(0, size.height - 40);
-    
-    // Create a smoother curved bottom
-    path.quadraticBezierTo(
-      size.width * 0.25, 
-      size.height,
-      size.width * 0.5, 
-      size.height - 20,
+  Widget _buildFormSheet() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(36), topRight: Radius.circular(36)),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+        child: FormBuilder(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome back \u{1F44B}',
+                style: GoogleFonts.afacad(fontSize: 24, fontWeight: FontWeight.w800, color: kTextPrimary),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter your phone number to continue',
+                style: GoogleFonts.afacad(fontSize: 14.5, color: kTextSecondary),
+              ),
+              const SizedBox(height: 26),
+              _buildPhoneField(),
+              const SizedBox(height: 22),
+              _buildContinueButton(),
+              const SizedBox(height: 22),
+              _buildOrDivider(),
+              const SizedBox(height: 18),
+              _buildGoogleButton(),
+            ],
+          ),
+        ),
+      ),
     );
-    
-    path.quadraticBezierTo(
-      size.width * 0.75, 
-      size.height - 40,
-      size.width, 
-      size.height - 40,
-    );
-    
-    path.lineTo(size.width, 0);
-    path.close();
-    
-    return path;
   }
 
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  Widget _buildPhoneField() {
+    return FormBuilderTextField(
+      name: 'phone',
+      keyboardType: TextInputType.phone,
+      validator: _phoneValidator,
+      style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w600, color: kTextPrimary),
+      decoration: InputDecoration(
+        labelText: 'Phone Number',
+        labelStyle: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
+        floatingLabelStyle: GoogleFonts.afacad(fontSize: 13, color: kPrimaryColor, fontWeight: FontWeight.w700),
+        hintText: '7XX XXX XXX',
+        hintStyle: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary.withValues(alpha: 0.7)),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 12),
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('\u{1F1F0}\u{1F1EA}', style: GoogleFonts.afacad(fontSize: 18)),
+                const SizedBox(width: 8),
+                Text('+254', style: GoogleFonts.afacad(color: kTextPrimary, fontWeight: FontWeight.w700, fontSize: 14)),
+                const SizedBox(width: 10),
+                Container(width: 1.2, height: 20, color: kBorderColor),
+              ],
+            ),
+          ),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+        filled: false,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+        border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: kBorderColor, width: 1.3)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: kBorderColor, width: 1.3)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: kPrimaryColor, width: 1.6)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: Colors.red)),
+      ),
+    );
+  }
+
+  Widget _buildContinueButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: _isLoading ? null : _continue,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 17),
+          decoration: BoxDecoration(
+            color: kPrimaryColor,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Center(
+            child: _isLoading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                : Text('Continue', style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrDivider() {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: kBorderColor, thickness: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text('or', style: GoogleFonts.afacad(color: kTextSecondary, fontWeight: FontWeight.w600, fontSize: 13)),
+        ),
+        Expanded(child: Divider(color: kBorderColor, thickness: 1)),
+      ],
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: _isLoading ? null : _continueWithGoogle,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: kBorderColor, width: 1.2),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/icons/google.png',
+                width: 20,
+                height: 20,
+                errorBuilder: (context, error, stackTrace) =>
+                    Text('G', style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryColor)),
+              ),
+              const SizedBox(width: 12),
+              Text('Continue with Google', style: GoogleFonts.afacad(fontSize: 15, fontWeight: FontWeight.w700, color: kTextPrimary)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

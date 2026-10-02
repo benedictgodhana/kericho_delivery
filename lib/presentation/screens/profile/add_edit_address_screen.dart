@@ -179,7 +179,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                                 children: [
                                   Text(
                                     'Using current location',
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.afacad(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -188,7 +188,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                                   Text(
                                     locationProvider.currentLocation?.address ??
                                         'Location not available',
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.afacad(
                                       fontSize: 10,
                                       color: AppTheme.textSecondary,
                                     ),
@@ -214,7 +214,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                   // Address Type
                   Text(
                     'Address Type',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.afacad(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -235,11 +235,11 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                   SwitchListTile(
                     title: Text(
                       'Set as default address',
-                      style: GoogleFonts.poppins(),
+                      style: GoogleFonts.afacad(),
                     ),
                     subtitle: Text(
                       'Use this address for deliveries by default',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.afacad(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
                       ),
@@ -291,7 +291,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Delivery Tips',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.afacad(
                             fontWeight: FontWeight.w600,
                             color: AppTheme.kerichoGreen,
                           ),
@@ -303,7 +303,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
                       '• Include landmarks for easier delivery\n'
                       '• Add gate/floor numbers if applicable\n'
                       '• Specify "leave at door" if preferred',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.afacad(
                         fontSize: 14,
                         color: AppTheme.kerichoGreen,
                       ),

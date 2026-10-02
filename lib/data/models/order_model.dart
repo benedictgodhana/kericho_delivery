@@ -198,6 +198,7 @@ enum PaymentMethod {
   mpesa,
   cash,
   card,
+  wallet,
 }
 
 enum PaymentStatus {

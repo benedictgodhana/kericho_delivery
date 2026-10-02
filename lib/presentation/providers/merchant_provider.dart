@@ -198,6 +198,25 @@ class MerchantProvider with ChangeNotifier {
     return _merchants.where((merchant) => merchant.isFeatured).toList();
   }
 
+  MerchantModel? getMerchantById(String id) {
+    try {
+      return _merchants.firstWhere((merchant) => merchant.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<MerchantModel> getTopRatedMerchants({int limit = 10}) {
+    final sorted = [..._merchants]..sort((a, b) => b.rating.compareTo(a.rating));
+    return sorted.take(limit).toList();
+  }
+
+  List<MerchantModel> getRecommendedMerchants({int limit = 10}) {
+    final sorted = [..._merchants]
+      ..sort((a, b) => (b.rating * b.ratingCount).compareTo(a.rating * a.ratingCount));
+    return sorted.take(limit).toList();
+  }
+
   List<MerchantModel> getNearbyMerchants(double lat, double lng) {
     // For now, return all merchants
     // Later implement actual distance calculation
@@ -221,6 +240,7 @@ class MerchantProvider with ChangeNotifier {
           category: 'Main Course',
           merchantId: merchantId,
           preparationTime: 20,
+          imageUrl: 'assets/images/top-view-table-full-delicious-food-composition.jpg',
           createdAt: DateTime.now(),
         ),
         ProductModel(
@@ -231,6 +251,29 @@ class MerchantProvider with ChangeNotifier {
           category: 'Main Course',
           merchantId: merchantId,
           preparationTime: 15,
+          imageUrl: 'assets/images/meat.jpg',
+          createdAt: DateTime.now(),
+        ),
+        ProductModel(
+          id: '103',
+          name: 'Kericho Tea (Pot)',
+          description: 'Locally grown tea, brewed fresh',
+          price: 80.0,
+          category: 'Drinks',
+          merchantId: merchantId,
+          preparationTime: 8,
+          imageUrl: 'assets/images/tea.jpg',
+          createdAt: DateTime.now(),
+        ),
+        ProductModel(
+          id: '104',
+          name: 'Grilled Chicken Platter',
+          description: 'Fast-grilled chicken with chips',
+          price: 420.0,
+          category: 'Fast Food',
+          merchantId: merchantId,
+          preparationTime: 18,
+          imageUrl: 'assets/images/fast_food.jpg',
           createdAt: DateTime.now(),
         ),
       ];
@@ -244,6 +287,18 @@ class MerchantProvider with ChangeNotifier {
           category: 'Dairy',
           merchantId: merchantId,
           preparationTime: 5,
+          imageUrl: 'assets/images/fresh-vegetables-fruit-market-stall.jpg',
+          createdAt: DateTime.now(),
+        ),
+        ProductModel(
+          id: '202',
+          name: 'Mixed Vegetables (1kg)',
+          description: 'Farm-fresh seasonal vegetables',
+          price: 150.0,
+          category: 'Produce',
+          merchantId: merchantId,
+          preparationTime: 5,
+          imageUrl: 'assets/images/green.jpg',
           createdAt: DateTime.now(),
         ),
       ];
@@ -257,10 +312,46 @@ class MerchantProvider with ChangeNotifier {
           category: 'Medicine',
           merchantId: merchantId,
           preparationTime: 5,
+          imageUrl: 'assets/images/pharmacy.jpg',
+          createdAt: DateTime.now(),
+        ),
+        ProductModel(
+          id: '302',
+          name: 'Vitamin C Tablets',
+          description: 'Immune support supplements',
+          price: 350.0,
+          category: 'Medicine',
+          merchantId: merchantId,
+          preparationTime: 5,
+          imageUrl: 'assets/images/pharmacy.jpg',
           createdAt: DateTime.now(),
         ),
       ];
     }
+  }
+
+  // Aggregated picks across all vendors, used by the home screen's Popular Picks rail.
+  List<ProductModel> getPopularProducts({int limit = 8}) {
+    final all = <ProductModel>[];
+    for (final merchant in _merchants) {
+      all.addAll(_getMockProducts(merchant.id));
+    }
+    return all.take(limit).toList();
+  }
+
+  // Full catalog across all vendors, used by the Menu tab.
+  List<ProductModel> getAllProducts() {
+    final all = <ProductModel>[];
+    for (final merchant in _merchants) {
+      all.addAll(_getMockProducts(merchant.id));
+    }
+    return all;
+  }
+
+  List<String> getProductCategories() {
+    final categories = getAllProducts().map((p) => p.category).toSet().toList();
+    categories.sort();
+    return ['All', ...categories];
   }
 
   void clearCategory() {}

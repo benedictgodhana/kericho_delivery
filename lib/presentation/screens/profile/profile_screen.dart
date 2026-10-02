@@ -1,11 +1,12 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:kericho_delivery/data/models/order_model.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kericho_delivery/data/models/user_model.dart';
 import 'package:provider/provider.dart';
 import 'package:kericho_delivery/presentation/providers/app_provider.dart';
-import 'package:kericho_delivery/presentation/providers/order_provider.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
-import 'package:kericho_delivery/core/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -17,439 +18,188 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // KulaHub brand palette (matches home/menu/cart/rewards screens)
+  static const Color kPrimaryColor = Color(0xFFFF5A36);
+  static const Color kSecondaryColor = Color(0xFFFFB020);
+  static const Color kBackgroundColor = Color(0xFFFFF8F1);
+  static const Color kCardColor = Colors.white;
+  static const Color kTextPrimary = Color(0xFF16181D);
+  static const Color kTextSecondary = Color(0xFF6C757D);
+  static const Color kBorderColor = Color(0xFFF0E4D8);
+  static const Color kSuccessColor = Color(0xFF2EAD6C);
+  static const Color kErrorColor = Color(0xFFE5484D);
+
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isUploadingAvatar = false;
+
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final orderProvider = Provider.of<OrderProvider>(context);
     final user = appProvider.user;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              AppRouter.pushNamed('/settings');
-            },
+      backgroundColor: kBackgroundColor,
+      extendBody: true,
+      body: user == null
+          ? SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(child: _buildLoginPrompt()),
+                ],
+              ),
+            )
+          : _buildProfileContent(user, appProvider),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: kCardColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: kBorderColor, width: 1.2),
+              ),
+              child: const Icon(CupertinoIcons.back, color: kTextPrimary, size: 20),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Text(
+            'Profile',
+            style: GoogleFonts.afacad(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: kTextPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => AppRouter.pushNamed(AppRouter.settingsRoute),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: kCardColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: kBorderColor, width: 1.2),
+              ),
+              child: const Icon(CupertinoIcons.settings, color: kTextPrimary, size: 18),
+            ),
           ),
         ],
       ),
-      body: user == null
-          ? _buildLoginPrompt()
-          : _buildProfileContent(user, orderProvider, appProvider),
     );
   }
 
   Widget _buildLoginPrompt() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.person_outline,
-            size: 100,
-            color: Colors.grey[300],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Please sign in to view profile',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: const BoxDecoration(color: kCardColor, shape: BoxShape.circle),
+              child: Icon(CupertinoIcons.person, size: 48, color: kTextSecondary.withValues(alpha: 0.5)),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Access your orders, saved addresses, and more',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey[500],
+            const SizedBox(height: 24),
+            Text(
+              'Please sign in to view profile',
+              style: GoogleFonts.afacad(fontSize: 19, fontWeight: FontWeight.w800, color: kTextPrimary),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () {
-              AppRouter.pushNamed(AppRouter.login);
-            },
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            const SizedBox(height: 10),
+            Text(
+              'Access your orders, saved addresses, and more',
+              style: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
+              textAlign: TextAlign.center,
             ),
-            child: const Text('Sign In'),
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () {
-              AppRouter.pushNamed(AppRouter.register);
-            },
-            child: const Text('Create Account'),
-          ),
-        ],
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              child: GestureDetector(
+                onTap: () => AppRouter.pushNamed(AppRouter.login),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: kPrimaryColor,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(color: kPrimaryColor.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 6)),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Sign In',
+                      style: GoogleFonts.afacad(fontSize: 15.5, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            GestureDetector(
+              onTap: () => AppRouter.pushNamed(AppRouter.register),
+              child: Text(
+                'Create Account',
+                style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w700, color: kPrimaryColor),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProfileContent(
     UserModel user,
-    OrderProvider orderProvider,
     AppProvider appProvider,
   ) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // Profile Header
+          _buildIdentityHeader(user),
           Container(
-            padding: const EdgeInsets.all(24),
-            color: AppTheme.primaryColor.withOpacity(0.05),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 66, 20, 32),
+            decoration: const BoxDecoration(color: kCardColor),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Picture
-                Stack(
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.primaryColor,
-                          width: 3,
-                        ),
-                      ),
-                      child: user.profileImage != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(50),
-                              child: CachedNetworkImage(
-                                imageUrl: user.profileImage!,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                                errorWidget: (context, url, error) => Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                            )
-                          : Icon(
-                              Icons.person,
-                              size: 60,
-                              color: AppTheme.primaryColor,
-                            ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 3,
-                          ),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          onPressed: _editProfile,
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // User Info
-                Text(
-                  user.fullName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
+                Center(
+                  child: Text(
+                    user.fullName,
+                    style: GoogleFonts.afacad(fontSize: 21, fontWeight: FontWeight.w800, color: kTextPrimary),
                   ),
                 ),
                 const SizedBox(height: 4),
-
-                Text(
-                  user.phone,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: AppTheme.textSecondary,
+                Center(
+                  child: Text(
+                    _getUserTypeText(user.userType),
+                    style: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
                   ),
                 ),
-                if (user.email != null && user.email!.isNotEmpty)
-                  Text(
-                    user.email!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-
-                const SizedBox(height: 16),
-
-                // User Type Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getUserTypeColor(user.userType),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _getUserTypeIcon(user.userType),
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _getUserTypeText(user.userType),
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Verification Badge
-                if (user.isVerified)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.verified,
-                          size: 14,
-                          color: Colors.green,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Verified',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.green,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // Statistics
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.2,
-              children: [
-                _buildStatCard(
-                  'Orders',
-                  orderProvider.totalOrders.toString(),
-                  Icons.shopping_bag,
-                ),
-                _buildStatCard(
-                  'Spent',
-                  'KSh ${orderProvider.totalSpent.toStringAsFixed(0)}',
-                  Icons.attach_money,
-                ),
-                _buildStatCard(
-                  'Rating',
-                  user.rating?.toStringAsFixed(1) ?? 'N/A',
-                  Icons.star,
-                  color: Colors.amber,
-                ),
-              ],
-            ),
-          ),
-
-          // Quick Actions
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Quick Actions',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 3,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.2,
-                  children: [
-                    _buildActionButton(
-                      Icons.history,
-                      'Orders',
-                      () => AppRouter.pushNamed(AppRouter.orderHistory!),
-                    ),
-                    _buildActionButton(
-                      Icons.location_on,
-                      'Addresses',
-                      _manageAddresses,
-                    ),
-                    _buildActionButton(
-                      Icons.favorite,
-                      'Favorites',
-                      _viewFavorites,
-                    ),
-                    _buildActionButton(
-                      Icons.payment,
-                      'Payments',
-                      _managePayments,
-                    ),
-                    _buildActionButton(
-                      Icons.notifications,
-                      'Notifications',
-                      _manageNotifications,
-                    ),
-                    _buildActionButton(
-                      Icons.help,
-                      'Help',
-                      _showHelp,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Recent Orders
-          if (orderProvider.orders.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Recent Orders',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          AppRouter.pushNamed(AppRouter.orderHistory!);
-                        },
-                        child: const Text('View All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ...orderProvider.getRecentOrders(limit: 3).map((order) {
-                    return _buildRecentOrderCard(order);
-                  }).toList(),
-                ],
-              ),
-            ),
-
-          // Account Section
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Account',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildAccountOption(
-                  Icons.edit,
-                  'Edit Profile',
-                  _editProfile,
-                ),
-                _buildAccountOption(
-                  Icons.security,
-                  'Privacy & Security',
-                  _showPrivacySettings,
-                ),
-                _buildAccountOption(
-                  Icons.language,
-                  'Language',
-                  _changeLanguage,
-                ),
-                _buildAccountOption(
-                  Icons.dark_mode,
-                  'Dark Mode',
-                  _toggleTheme,
-                ),
-                _buildAccountOption(
-                  Icons.logout,
-                  'Sign Out',
-                  _signOut,
-                  color: Colors.red,
-                ),
-              ],
-            ),
-          ),
-
-          // App Info
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[50],
-            child: Column(
-              children: [
-                Text(
-                  'Kericho Delivery v1.0.0',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '© ${DateTime.now().year} Kericho Delivery. All rights reserved.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                const SizedBox(height: 24),
+                _buildDetailsCard(user),
+                const SizedBox(height: 28),
+                _buildSectionTitle('Account'),
+                const SizedBox(height: 14),
+                _buildAccountSection(appProvider),
+                const SizedBox(height: 28),
+                _buildAppInfo(),
+                const SizedBox(height: 110),
               ],
             ),
           ),
@@ -458,196 +208,224 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon,
-      {Color color = AppTheme.primaryColor}) {
-    return Container(
-      margin: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
+  // Flat colored block + avatar overlapping the seam with the white content below.
+  Widget _buildIdentityHeader(UserModel user) {
+    const headerHeight = 190.0;
+    const avatarSize = 100.0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: headerHeight,
+          width: double.infinity,
+          color: kPrimaryColor,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).maybePop(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
+                      child: const Icon(CupertinoIcons.back, color: Colors.white, size: 20),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Details',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.afacad(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => AppRouter.pushNamed(AppRouter.settingsRoute),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
+                      child: const Icon(CupertinoIcons.settings, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
+        Positioned(
+          top: headerHeight - avatarSize / 2,
+          left: 0,
+          right: 0,
+          child: Center(child: _buildAvatar(user, avatarSize)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAvatar(UserModel user, double size) {
+    return Stack(
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: kBackgroundColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 4),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 12, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: user.profileImage != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(size / 2),
+                  child: user.profileImage!.startsWith('http')
+                      ? CachedNetworkImage(
+                          imageUrl: user.profileImage!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: kPrimaryColor)),
+                          errorWidget: (context, url, error) => Icon(CupertinoIcons.person_fill, size: size * 0.48, color: kTextSecondary),
+                        )
+                      : Image.file(
+                          File(user.profileImage!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(CupertinoIcons.person_fill, size: size * 0.48, color: kTextSecondary),
+                        ),
+                )
+              : Icon(CupertinoIcons.person_fill, size: size * 0.48, color: kTextSecondary),
+        ),
+        Positioned(
+          bottom: 2,
+          right: 2,
+          child: GestureDetector(
+            onTap: _isUploadingAvatar ? null : () => _showAvatarPickerSheet(user),
+            child: Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: kSecondaryColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2.5),
+              ),
+              child: _isUploadingAvatar
+                  ? const Padding(
+                      padding: EdgeInsets.all(7),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(CupertinoIcons.camera_fill, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsCard(UserModel user) {
+    return Column(
+      children: [
+        _buildDetailRow(
+          icon: CupertinoIcons.mail_solid,
+          label: 'Email',
+          value: (user.email != null && user.email!.isNotEmpty) ? user.email! : 'Not set',
+        ),
+        Divider(height: 28, color: kBorderColor),
+        _buildDetailRow(
+          icon: CupertinoIcons.phone_fill,
+          label: 'Mobile Number',
+          value: '+254 ${user.phone}',
+        ),
+        Divider(height: 28, color: kBorderColor),
+        _buildDetailRow(
+          icon: _getUserTypeIcon(user.userType),
+          label: 'Account Type',
+          value: _getUserTypeText(user.userType),
+        ),
+        Divider(height: 28, color: kBorderColor),
+        _buildDetailRow(
+          icon: CupertinoIcons.calendar,
+          label: 'Member Since',
+          value: _formatMemberSince(user.createdAt),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow({required IconData icon, required String label, required String value}) {
+    return Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(color: kPrimaryColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+          child: Icon(icon, size: 17, color: kPrimaryColor),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.afacad(fontSize: 12.5, color: kTextSecondary)),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w700, color: kTextPrimary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  static const List<String> _monthAbbreviations = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _formatMemberSince(DateTime date) {
+    return '${_monthAbbreviations[date.month - 1]} ${date.year}';
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.afacad(fontSize: 19, fontWeight: FontWeight.w800, color: kTextPrimary, letterSpacing: -0.2),
+    );
+  }
+
+  Widget _buildAccountSection(AppProvider appProvider) {
+    final options = [
+      (CupertinoIcons.pencil, 'Edit Profile', _editProfile, kTextPrimary),
+      (CupertinoIcons.lock_shield_fill, 'Privacy & Security', _showPrivacySettings, kTextPrimary),
+      (CupertinoIcons.globe, 'Language', _changeLanguage, kTextPrimary),
+      (CupertinoIcons.moon_fill, 'Dark Mode', _toggleTheme, kTextPrimary),
+      (CupertinoIcons.square_arrow_right, 'Sign Out', _signOut, kErrorColor),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: kCardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kBorderColor, width: 1),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 24,
-            color: color,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
+          for (int i = 0; i < options.length; i++)
+            _buildAccountOption(
+              options[i].$1,
+              options[i].$2,
+              options[i].$3,
+              color: options[i].$4,
+              showDivider: i < options.length - 1,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-            ),
-          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: AppTheme.primaryColor,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentOrderCard(OrderModel order) {
-    return GestureDetector(
-      onTap: () {
-        AppRouter.pushNamed(
-          AppRouter.orderTracking,
-          arguments: {'orderId': order.id},
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Order Icon
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: _getStatusColor(order.status).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _getStatusIcon(order.status),
-                color: _getStatusColor(order.status),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Order Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Order #${order.orderNumber}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(order.status).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          _getStatusText(order.status),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: _getStatusColor(order.status),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatDate(order.createdAt),
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'KSh ${order.totalAmount.toStringAsFixed(2)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -656,44 +434,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
     IconData icon,
     String label,
     VoidCallback onTap, {
-    Color color = AppTheme.textPrimary,
+    required Color color,
+    required bool showDivider,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(
-        label,
-        style: GoogleFonts.poppins(color: color),
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: color),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(label, style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w600, color: color)),
+                ),
+                Icon(CupertinoIcons.chevron_forward, size: 16, color: kTextSecondary.withValues(alpha: 0.5)),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider) Divider(height: 1, indent: 16, endIndent: 16, color: kBorderColor),
+      ],
+    );
+  }
+
+  Widget _buildAppInfo() {
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset('assets/images/KulaHub_logo-removebg-preview.png', height: 48, fit: BoxFit.contain),
+          const SizedBox(height: 12),
+          Text('KulaHub v1.0.0', style: GoogleFonts.afacad(fontSize: 13, color: kTextSecondary)),
+          const SizedBox(height: 4),
+          Text(
+            '© ${DateTime.now().year} KulaHub. All rights reserved.',
+            style: GoogleFonts.afacad(fontSize: 11.5, color: kTextSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
-      contentPadding: EdgeInsets.zero,
     );
   }
 
   // Helper Methods
-  Color _getUserTypeColor(UserType userType) {
-    switch (userType) {
-      case UserType.customer:
-        return AppTheme.primaryColor;
-      case UserType.rider:
-        return Colors.blue;
-      case UserType.merchant:
-        return Colors.green;
-      case UserType.admin:
-        return Colors.purple;
-    }
-  }
-
   IconData _getUserTypeIcon(UserType userType) {
     switch (userType) {
       case UserType.customer:
-        return Icons.person;
+        return CupertinoIcons.person_fill;
       case UserType.rider:
-        return Icons.delivery_dining;
+        return CupertinoIcons.car_detailed;
       case UserType.merchant:
-        return Icons.store;
+        return CupertinoIcons.bag_fill;
       case UserType.admin:
-        return Icons.admin_panel_settings;
+        return CupertinoIcons.shield_fill;
     }
   }
 
@@ -710,110 +510,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  String _getStatusText(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return 'Pending';
-      case OrderStatus.accepted:
-        return 'Accepted';
-      case OrderStatus.preparing:
-        return 'Preparing';
-      case OrderStatus.ready:
-        return 'Ready';
-      case OrderStatus.pickedUp:
-        return 'On the way';
-      case OrderStatus.delivered:
-        return 'Delivered';
-      case OrderStatus.cancelled:
-        return 'Cancelled';
-    }
-  }
-
-  Color _getStatusColor(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return Colors.orange;
-      case OrderStatus.accepted:
-        return Colors.blue;
-      case OrderStatus.preparing:
-        return Colors.purple;
-      case OrderStatus.ready:
-        return Colors.teal;
-      case OrderStatus.pickedUp:
-        return AppTheme.primaryColor;
-      case OrderStatus.delivered:
-        return Colors.green;
-      case OrderStatus.cancelled:
-        return Colors.red;
-    }
-  }
-
-  IconData _getStatusIcon(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return Icons.access_time;
-      case OrderStatus.accepted:
-        return Icons.check_circle_outline;
-      case OrderStatus.preparing:
-        return Icons.restaurant;
-      case OrderStatus.ready:
-        return Icons.shopping_bag;
-      case OrderStatus.pickedUp:
-        return Icons.delivery_dining;
-      case OrderStatus.delivered:
-        return Icons.check_circle;
-      case OrderStatus.cancelled:
-        return Icons.cancel;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inHours < 1) {
-      return '${difference.inMinutes} minutes ago';
-    } else if (difference.inDays < 1) {
-      return '${difference.inHours} hours ago';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
-
   // Action Methods
   void _editProfile() {
     AppRouter.pushNamed(
       '/editProfile',
-      arguments: {
-        'user': Provider.of<AppProvider>(context, listen: false).user
+      arguments: {'user': Provider.of<AppProvider>(context, listen: false).user},
+    );
+  }
+
+  void _showAvatarPickerSheet(UserModel user) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          decoration: const BoxDecoration(
+            color: kCardColor,
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: kBorderColor, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Update Profile Photo',
+                style: GoogleFonts.afacad(fontSize: 17, fontWeight: FontWeight.w800, color: kTextPrimary),
+              ),
+              const SizedBox(height: 18),
+              _buildAvatarPickerOption(
+                icon: CupertinoIcons.camera_fill,
+                label: 'Take Photo',
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAvatarImage(user, ImageSource.camera);
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildAvatarPickerOption(
+                icon: CupertinoIcons.photo_fill_on_rectangle_fill,
+                label: 'Choose from Gallery',
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAvatarImage(user, ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
       },
     );
   }
 
-  void _manageAddresses() {
-    AppRouter.pushNamed('/addresses');
+  Widget _buildAvatarPickerOption({required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: kBackgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kBorderColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(color: kPrimaryColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(icon, size: 18, color: kPrimaryColor),
+            ),
+            const SizedBox(width: 14),
+            Text(label, style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w700, color: kTextPrimary)),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _viewFavorites() {
-    AppRouter.pushNamed('/favorites');
-  }
+  Future<void> _pickAvatarImage(UserModel user, ImageSource source) async {
+    final pickedFile = await _imagePicker.pickImage(source: source, maxWidth: 800, imageQuality: 85);
+    if (pickedFile == null || !mounted) return;
 
-  void _managePayments() {
-    AppRouter.pushNamed('/paymentMethods');
-  }
-
-  void _manageNotifications() {
-    AppRouter.pushNamed('/notifications');
-  }
-
-  void _showHelp() {
-    AppRouter.pushNamed('/help');
+    setState(() => _isUploadingAvatar = true);
+    try {
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      await appProvider.updateUserProfile(user.copyWith(profileImage: pickedFile.path));
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
   }
 
   void _showPrivacySettings() {
@@ -833,12 +624,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Sign Out'),
-          content: const Text('Are you sure you want to sign out?'),
+          backgroundColor: kCardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text('Sign Out', style: GoogleFonts.afacad(fontWeight: FontWeight.w800, color: kTextPrimary)),
+          content: Text('Are you sure you want to sign out?', style: GoogleFonts.afacad(color: kTextSecondary)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: GoogleFonts.afacad(fontWeight: FontWeight.w700, color: kTextSecondary)),
             ),
             TextButton(
               onPressed: () {
@@ -846,10 +639,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Provider.of<AppProvider>(context, listen: false).logout();
                 AppRouter.pushNamedAndRemoveUntil(AppRouter.login);
               },
-              child: const Text(
-                'Sign Out',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: Text('Sign Out', style: GoogleFonts.afacad(fontWeight: FontWeight.w700, color: kErrorColor)),
             ),
           ],
         );
@@ -864,15 +654,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Select Language'),
+          backgroundColor: kCardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text('Select Language', style: GoogleFonts.afacad(fontWeight: FontWeight.w800, color: kTextPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.language),
-                title: const Text('English'),
+                leading: Icon(CupertinoIcons.globe, color: kPrimaryColor),
+                title: Text('English', style: GoogleFonts.afacad(color: kTextPrimary)),
                 trailing: appProvider.locale.languageCode == 'en'
-                    ? const Icon(Icons.check, color: Colors.green)
+                    ? Icon(CupertinoIcons.checkmark_alt, color: kSuccessColor)
                     : null,
                 onTap: () {
                   appProvider.setLocale(const Locale('en', 'US'));
@@ -880,10 +672,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.language),
-                title: const Text('Kiswahili'),
+                leading: Icon(CupertinoIcons.globe, color: kPrimaryColor),
+                title: Text('Kiswahili', style: GoogleFonts.afacad(color: kTextPrimary)),
                 trailing: appProvider.locale.languageCode == 'sw'
-                    ? const Icon(Icons.check, color: Colors.green)
+                    ? Icon(CupertinoIcons.checkmark_alt, color: kSuccessColor)
                     : null,
                 onTap: () {
                   appProvider.setLocale(const Locale('sw', 'KE'));
@@ -896,4 +688,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+
+  // ==================== BOTTOM NAV BAR ====================
+  Widget _buildBottomNavBar() {
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          height: 68,
+          decoration: BoxDecoration(
+            color: kCardColor,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 20, offset: const Offset(0, 8)),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(CupertinoIcons.house_fill, 'Home', false, () => AppRouter.pushNamedAndRemoveUntil(AppRouter.home)),
+              _buildNavItem(CupertinoIcons.square_grid_2x2, 'Menu', false, () => AppRouter.pushNamed(AppRouter.menu)),
+              _buildCartNavItem(),
+              _buildNavItem(CupertinoIcons.gift, 'Rewards', false, () => AppRouter.pushNamed(AppRouter.promotions)),
+              _buildNavItem(CupertinoIcons.person_fill, 'Profile', true, () {}),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: selected ? kPrimaryColor : kTextSecondary, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.afacad(
+                color: selected ? kPrimaryColor : kTextSecondary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 11.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCartNavItem() {
+    final appProvider = context.watch<AppProvider>();
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        AppRouter.pushNamed(AppRouter.cart);
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: kPrimaryColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: kPrimaryColor.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Center(
+                  child: Icon(CupertinoIcons.cart_fill, color: Colors.white, size: 22),
+                ),
+                if (appProvider.cartItemCount > 0)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(color: kErrorColor, shape: BoxShape.circle),
+                      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                      child: Center(
+                        child: Text(
+                          appProvider.cartItemCount > 9 ? '9+' : '${appProvider.cartItemCount}',
+                          style: GoogleFonts.afacad(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+

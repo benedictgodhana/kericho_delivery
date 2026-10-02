@@ -1,7 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:kericho_delivery/data/models/user_model.dart';
 import 'package:kericho_delivery/presentation/router/app_router.dart';
-import 'package:kericho_delivery/core/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
@@ -13,65 +12,41 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  // KulaHub brand palette (matches login screen)
+  static const Color kPrimaryColor = Color(0xFFFF5A36);
+  static const Color kPrimaryDark = Color(0xFFC73F22);
+  static const Color kFieldFill = Color(0xFFFCEFE8);
+  static const Color kTextPrimary = Color(0xFF16181D);
+  static const Color kTextSecondary = Color(0xFF6C757D);
+
   final _formKey = GlobalKey<FormBuilderState>();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  UserType _selectedUserType = UserType.customer;
-
-  // Custom validators
-  String? _requiredValidator(String? value, {String? fieldName}) {
-    if (value == null || value.isEmpty) {
-      return fieldName != null ? '$fieldName is required' : 'This field is required';
-    }
-    return null;
-  }
-
-  String? _nameValidator(String? value) {
-    final requiredError = _requiredValidator(value, fieldName: 'Full name');
-    if (requiredError != null) return requiredError;
-    
-    if (value!.length < 2) {
-      return 'Name is too short';
-    }
-    return null;
-  }
-
-  String? _phoneValidator(String? value) {
-    final requiredError = _requiredValidator(value, fieldName: 'Phone number');
-    if (requiredError != null) return requiredError;
-    
-    final phoneRegex = RegExp(r'^[0-9]{9}$');
-    if (!phoneRegex.hasMatch(value!)) {
-      return 'Enter a valid 9-digit number';
-    }
-    return null;
-  }
+  bool _agreedToTerms = false;
 
   String? _emailValidator(String? value) {
-    if (value != null && value.isNotEmpty) {
-      final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-      if (!emailRegex.hasMatch(value)) {
-        return 'Enter a valid email';
-      }
+    if (value == null || value.isEmpty) {
+      return 'Email address is required';
+    }
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Enter a valid email';
     }
     return null;
   }
 
   String? _passwordValidator(String? value) {
-    final requiredError = _requiredValidator(value, fieldName: 'Password');
-    if (requiredError != null) return requiredError;
-    
-    if (value!.length < 6) {
+    if (value == null || value.isEmpty) {
+      return 'Password is required';
+    }
+    if (value.length < 6) {
       return 'Password must be at least 6 characters';
     }
     return null;
   }
 
   String? _confirmPasswordValidator(String? value) {
-    final requiredError = _requiredValidator(value, fieldName: 'Confirm password');
-    if (requiredError != null) return requiredError;
-    
     final passwordValue = _formKey.currentState?.fields['password']?.value;
     if (value != passwordValue) {
       return 'Passwords do not match';
@@ -79,27 +54,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  String? _termsValidator(bool? value) {
-    if (value == null || value == false) {
-      return 'You must accept the terms';
+  void _register() async {
+    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please agree to the User Agreement and Privacy Policy', style: GoogleFonts.afacad(color: Colors.white))),
+      );
+      return;
     }
-    return null;
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isLoading = false);
+    AppRouter.pushNamedAndRemoveUntil(AppRouter.home);
   }
 
-  void _register() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final formData = _formKey.currentState!.value;
-      
-      setState(() => _isLoading = true);
-
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() => _isLoading = false);
-
-      // For now, navigate to home
-      AppRouter.pushNamedAndRemoveUntil(AppRouter.home);
-    }
+  void _registerWith(String provider) async {
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isLoading = false);
+    AppRouter.pushNamedAndRemoveUntil(AppRouter.home);
   }
 
   void _goToLogin() {
@@ -109,329 +82,152 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+      backgroundColor: kPrimaryColor,
+      body: Column(
+        children: [
+          Expanded(flex: 32, child: _buildTopPanel()),
+          Expanded(flex: 68, child: _buildFormSheet()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopPanel() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [kPrimaryColor, kPrimaryDark],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -60,
+            top: -40,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+            ),
+          ),
+          Positioned(
+            left: -50,
+            bottom: -70,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                        child: const Icon(CupertinoIcons.back, color: Colors.white, size: 19),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 6)),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/images/KulaHub_logo-removebg-preview.png',
+                        height: 40,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormSheet() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(36), topRight: Radius.circular(36)),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        child: FormBuilder(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back Button
-              IconButton(
-                onPressed: () => AppRouter.pop(),
-                icon: const Icon(Icons.arrow_back),
+              Text('Create Account', style: GoogleFonts.afacad(fontSize: 24, fontWeight: FontWeight.w800, color: kTextPrimary)),
+              const SizedBox(height: 6),
+              Text('Sign up to get started', style: GoogleFonts.afacad(fontSize: 13.5, color: kTextSecondary)),
+              const SizedBox(height: 24),
+              _buildFieldLabel('Email Address'),
+              _buildTextField(
+                name: 'email',
+                hint: 'Enter your email address',
+                validator: _emailValidator,
+                keyboardType: TextInputType.emailAddress,
+                prefixIcon: Icon(CupertinoIcons.mail_solid, size: 19, color: kTextSecondary),
               ),
-              
-              const SizedBox(height: 20),
-              
-              // Title
-              Text(
-                'Create Account',
-                style: GoogleFonts.poppins(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+              const SizedBox(height: 16),
+              _buildFieldLabel('Password'),
+              _buildTextField(
+                name: 'password',
+                hint: 'Enter your password',
+                validator: _passwordValidator,
+                obscure: _obscurePassword,
+                prefixIcon: Icon(CupertinoIcons.lock_fill, size: 19, color: kTextSecondary),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye, size: 19, color: kTextSecondary),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
-              
-              Text(
-                'Sign up to get started',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: AppTheme.textSecondary,
+              const SizedBox(height: 16),
+              _buildFieldLabel('Confirm Password'),
+              _buildTextField(
+                name: 'confirmPassword',
+                hint: 'Re-enter your password',
+                validator: _confirmPasswordValidator,
+                obscure: _obscureConfirmPassword,
+                prefixIcon: Icon(CupertinoIcons.lock_fill, size: 19, color: kTextSecondary),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureConfirmPassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye, size: 19, color: kTextSecondary),
+                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                 ),
               ),
-              
-              const SizedBox(height: 40),
-              
-              // Registration Form
-              FormBuilder(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // Full Name
-                    FormBuilderTextField(
-                      name: 'fullName',
-                      decoration: InputDecoration(
-                        labelText: 'Full Name',
-                        prefixIcon: const Icon(Icons.person),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) => _nameValidator(value),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Phone Number
-                    FormBuilderTextField(
-                      name: 'phone',
-                      decoration: InputDecoration(
-                        labelText: 'Phone Number',
-                        prefixText: '+254 ',
-                        prefixIcon: const Icon(Icons.phone),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) => _phoneValidator(value),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Email (Optional)
-                    FormBuilderTextField(
-                      name: 'email',
-                      decoration: InputDecoration(
-                        labelText: 'Email (Optional)',
-                        prefixIcon: const Icon(Icons.email),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) => _emailValidator(value),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // User Type Selection
-                    FormBuilderDropdown<UserType>(
-                      name: 'userType',
-                      initialValue: _selectedUserType,
-                      decoration: InputDecoration(
-                        labelText: 'I am a',
-                        prefixIcon: const Icon(Icons.person_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: UserType.customer,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.shopping_cart, size: 20),
-                              const SizedBox(width: 10),
-                              Text('Customer', style: GoogleFonts.poppins()),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: UserType.rider,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.delivery_dining, size: 20),
-                              const SizedBox(width: 10),
-                              Text('Delivery Rider', style: GoogleFonts.poppins()),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: UserType.merchant,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.store, size: 20),
-                              const SizedBox(width: 10),
-                              Text('Merchant', style: GoogleFonts.poppins()),
-                            ],
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedUserType = value);
-                        }
-                      },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Password
-                    FormBuilderTextField(
-                      name: 'password',
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      obscureText: _obscurePassword,
-                      validator: (value) => _passwordValidator(value),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Confirm Password
-                    FormBuilderTextField(
-                      name: 'confirmPassword',
-                      decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      obscureText: _obscureConfirmPassword,
-                      validator: (value) => _confirmPasswordValidator(value),
-                    ),
-                    
-                    const SizedBox(height: 30),
-                    
-                    // Terms Agreement
-                    FormBuilderCheckbox(
-                      name: 'acceptTerms',
-                      title: RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'I agree to the ',
-                              style: GoogleFonts.poppins(
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'Terms & Conditions',
-                              style: GoogleFonts.poppins(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            TextSpan(
-                              text: ' and ',
-                              style: GoogleFonts.poppins(
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'Privacy Policy',
-                              style: GoogleFonts.poppins(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      validator: (value) => _termsValidator(value),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 30),
-                    
-                    // Register Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                'Create Account',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Divider
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: Colors.grey[300])),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'or',
-                            style: GoogleFonts.poppins(
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ),
-                        Expanded(child: Divider(color: Colors.grey[300])),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Login Option
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Already have an account? ',
-                          style: GoogleFonts.poppins(
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: _goToLogin,
-                          child: Text(
-                            'Sign In',
-                            style: GoogleFonts.poppins(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Additional Info based on user type
-              if (_selectedUserType == UserType.rider)
-                _buildRiderInfo(),
-              if (_selectedUserType == UserType.merchant)
-                _buildMerchantInfo(),
+              const SizedBox(height: 18),
+              _buildTermsCheckbox(),
+              const SizedBox(height: 22),
+              _buildSubmitButton('Sign Up', _register),
+              const SizedBox(height: 22),
+              _buildSocialSection('Other ways to sign up'),
+              const SizedBox(height: 24),
+              _buildSwitchRow('Already have an account? ', 'Sign In', _goToLogin),
             ],
           ),
         ),
@@ -439,81 +235,150 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildRiderInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.teaGreen.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.delivery_dining, color: AppTheme.kerichoGreen),
-              const SizedBox(width: 8),
-              Text(
-                'Become a Rider',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.kerichoGreen,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '• Earn money by delivering orders\n'
-            '• Flexible working hours\n'
-            '• Weekly payments via M-Pesa\n'
-            '• Required: Valid ID, Motorcycle/Bicycle',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: AppTheme.kerichoGreen,
-            ),
-          ),
-        ],
+  Widget _buildFieldLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(label, style: GoogleFonts.afacad(fontSize: 13, fontWeight: FontWeight.w600, color: kTextSecondary)),
+    );
+  }
+
+  Widget _buildTextField({
+    required String name,
+    required String hint,
+    required String? Function(String?) validator,
+    bool obscure = false,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    TextInputType? keyboardType,
+  }) {
+    return FormBuilderTextField(
+      name: name,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w600, color: kTextPrimary),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary.withValues(alpha: 0.7)),
+        prefixIcon: prefixIcon == null ? null : Padding(padding: const EdgeInsets.only(left: 4), child: prefixIcon),
+        prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 0),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: kFieldFill,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: const BorderSide(color: kPrimaryColor, width: 1.5)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: const BorderSide(color: Colors.red)),
       ),
     );
   }
 
-  Widget _buildMerchantInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.teaGreen.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.store, color: AppTheme.kerichoGreen),
-              const SizedBox(width: 8),
-              Text(
-                'List Your Business',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.kerichoGreen,
-                ),
-              ),
-            ],
+  Widget _buildTermsCheckbox() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 22,
+          height: 22,
+          child: Checkbox(
+            value: _agreedToTerms,
+            onChanged: (value) => setState(() => _agreedToTerms = value ?? false),
+            activeColor: kPrimaryColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          const SizedBox(height: 8),
-          Text(
-            '• Reach more customers in Kericho\n'
-            '• Manage orders through our app\n'
-            '• Secure payments via M-Pesa\n'
-            '• Required: Business license, KRA PIN',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: AppTheme.kerichoGreen,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(text: "I've read and agreed to ", style: GoogleFonts.afacad(fontSize: 12.5, color: kTextSecondary)),
+                  TextSpan(text: 'User Agreement', style: GoogleFonts.afacad(fontSize: 12.5, color: kPrimaryColor, fontWeight: FontWeight.w700)),
+                  TextSpan(text: ' and ', style: GoogleFonts.afacad(fontSize: 12.5, color: kTextSecondary)),
+                  TextSpan(text: 'Privacy Policy', style: GoogleFonts.afacad(fontSize: 12.5, color: kPrimaryColor, fontWeight: FontWeight.w700)),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton(String label, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: _isLoading ? null : onPressed,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 17),
+          decoration: BoxDecoration(
+            color: kPrimaryColor,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Center(
+            child: _isLoading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                : Text(label, style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _buildSocialSection(String label) {
+    return Column(
+      children: [
+        Text(label, style: GoogleFonts.afacad(fontSize: 13, color: kTextSecondary)),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildSocialButton(
+              onTap: () => _registerWith('google'),
+              child: Image.asset(
+                'assets/icons/google.png',
+                width: 20,
+                height: 20,
+                errorBuilder: (context, error, stackTrace) =>
+                    Text('G', style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryColor)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialButton({required VoidCallback onTap, required Widget child}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFFF0E4D8), width: 1.2),
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+
+  Widget _buildSwitchRow(String prefix, String action, VoidCallback onTap) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(prefix, style: GoogleFonts.afacad(color: kTextSecondary, fontSize: 13.5)),
+        GestureDetector(
+          onTap: onTap,
+          child: Text(action, style: GoogleFonts.afacad(color: kPrimaryColor, fontWeight: FontWeight.w700, fontSize: 13.5)),
+        ),
+      ],
     );
   }
 }

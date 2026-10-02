@@ -20,22 +20,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   final List<OnboardingItem> _onboardingItems = [
     OnboardingItem(
-      title: 'Fast Delivery in Kericho',
-      description: 'Get your favorite food, groceries, and more delivered to your doorstep in minutes.',
+      title: 'One App, Every Kitchen',
+      description: 'Discover restaurants, cafés, bakeries and cloud kitchens near you — all in a single marketplace.',
       assetImage: AppIcons.deliveryMan,
       color: Colors.white,
-      subtitle: 'QUICK & RELIABLE',
+      subtitle: 'ONE MARKETPLACE, MANY VENDORS',
     ),
     OnboardingItem(
-      title: 'Wide Variety of Stores',
-      description: 'Choose from restaurants, supermarkets, pharmacies, and local shops across Kericho.',
+      title: 'Browse Before You Buy',
+      description: 'Explore menus, prices and ratings instantly — no account needed until you\'re ready to order.',
       assetImage: AppIcons.shopping,
       color: Colors.white,
-      subtitle: 'ENDLESS CHOICES',
+      subtitle: 'NO LOGIN REQUIRED',
     ),
     OnboardingItem(
       title: 'Easy M-Pesa Payments',
-      description: 'Pay securely with M-Pesa. Cash on delivery also available for your convenience.',
+      description: 'Pay securely with M-Pesa, card or wallet. Cash on delivery also available for your convenience.',
       icon: Icons.phone_android,
       color: Colors.white,
       subtitle: 'SECURE & CONVENIENT',
@@ -118,37 +118,51 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           SafeArea(
             child: Column(
               children: [
-                // Skip Button
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1,
+                // Logo + Skip Button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Image.asset(
+                          'assets/images/KulaHub_logo-removebg-preview.png',
+                          height: 64,
+                          fit: BoxFit.contain,
                         ),
                       ),
-                      child: TextButton(
-                        onPressed: _goToLogin,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      const Spacer(),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 1,
+                          ),
                         ),
-                        child: Text(
-                          'SKIP',
-                          style: GoogleFonts.lexend(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
+                        child: TextButton(
+                          onPressed: _continueAsGuest,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                          child: Text(
+                            'SKIP',
+                            style: GoogleFonts.afacad(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
 
@@ -210,7 +224,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                 curve: Curves.easeInOutCubic,
                               );
                             } else {
-                              _goToLogin();
+                              _continueAsGuest();
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -227,8 +241,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                _currentPage < _onboardingItems.length - 1 ? 'CONTINUE' : 'GET STARTED NOW',
-                                style: GoogleFonts.lexend(
+                                _currentPage < _onboardingItems.length - 1 ? 'CONTINUE' : 'START BROWSING',
+                                style: GoogleFonts.afacad(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.0,
@@ -265,7 +279,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             children: [
                               Text(
                                 'Already have an account? ',
-                                style: GoogleFonts.lexend(
+                                style: GoogleFonts.afacad(
                                   color: Colors.white.withOpacity(0.9),
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
@@ -286,7 +300,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                   ),
                                   child: Text(
                                     'SIGN IN',
-                                    style: GoogleFonts.lexend(
+                                    style: GoogleFonts.afacad(
                                       color: Colors.white,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
@@ -389,7 +403,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           // Subtitle
           Text(
             item.subtitle,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.afacad(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: AppTheme.primaryColor,
@@ -410,7 +424,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           Text(
             item.title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.afacad(
               fontSize: 36,
               fontWeight: FontWeight.w900,
               color: Colors.white,
@@ -434,7 +448,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             child: Text(
               item.description,
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.afacad(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.white.withOpacity(0.95),
@@ -457,6 +471,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _goToLogin() {
     AppRouter.pushReplacementNamed(AppRouter.login);
+  }
+
+  // Browsing restaurants and menus never requires an account — only checkout does.
+  void _continueAsGuest() {
+    AppRouter.pushReplacementNamed(AppRouter.home);
   }
 }
 

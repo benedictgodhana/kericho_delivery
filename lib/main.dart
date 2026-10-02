@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
           final appProvider = Provider.of<AppProvider>(context);
           
           return MaterialApp(
-            title: 'Kericho Delivery',
+            title: 'KulaHub',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
