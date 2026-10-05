@@ -207,13 +207,14 @@ class MerchantProvider with ChangeNotifier {
   }
 
   List<MerchantModel> getTopRatedMerchants({int limit = 10}) {
-    final sorted = [..._merchants]..sort((a, b) => b.rating.compareTo(a.rating));
+    final sorted = [..._merchants]
+      ..sort((a, b) => b.rating.compareTo(a.rating));
     return sorted.take(limit).toList();
   }
 
   List<MerchantModel> getRecommendedMerchants({int limit = 10}) {
-    final sorted = [..._merchants]
-      ..sort((a, b) => (b.rating * b.ratingCount).compareTo(a.rating * a.ratingCount));
+    final sorted = [..._merchants]..sort((a, b) =>
+        (b.rating * b.ratingCount).compareTo(a.rating * a.ratingCount));
     return sorted.take(limit).toList();
   }
 
@@ -235,18 +236,25 @@ class MerchantProvider with ChangeNotifier {
         ProductModel(
           id: '101',
           name: 'Chicken Pilau',
-          description: 'Spiced rice with tender chicken pieces',
+          description:
+              'Fragrant basmati rice simmered in a rich blend of warm spices, slow-cooked with tender, '
+              'juicy chicken pieces until every grain soaks up the flavor. A comforting, hearty classic '
+              'served hot and ready to satisfy.',
           price: 350.0,
           category: 'Main Course',
           merchantId: merchantId,
           preparationTime: 20,
-          imageUrl: 'assets/images/top-view-table-full-delicious-food-composition.jpg',
+          imageUrl:
+              'assets/images/top-view-table-full-delicious-food-composition.jpg',
           createdAt: DateTime.now(),
         ),
         ProductModel(
           id: '102',
           name: 'Ugali & Fish',
-          description: 'Traditional maize meal with fried fish',
+          description:
+              'Smooth, stone-ground maize meal cooked to a soft, fluffy finish and paired with crispy '
+              'golden-fried fish fillets. A timeless local favorite, generously portioned and best '
+              'enjoyed fresh off the pan.',
           price: 300.0,
           category: 'Main Course',
           merchantId: merchantId,
@@ -257,7 +265,9 @@ class MerchantProvider with ChangeNotifier {
         ProductModel(
           id: '103',
           name: 'Kericho Tea (Pot)',
-          description: 'Locally grown tea, brewed fresh',
+          description:
+              'A full pot of Kericho\'s finest tea leaves, grown in the highlands and brewed strong and '
+              'aromatic. Rich, warming, and perfect for sharing over good conversation.',
           price: 80.0,
           category: 'Drinks',
           merchantId: merchantId,
@@ -268,7 +278,9 @@ class MerchantProvider with ChangeNotifier {
         ProductModel(
           id: '104',
           name: 'Grilled Chicken Platter',
-          description: 'Fast-grilled chicken with chips',
+          description:
+              'Juicy chicken grilled over an open flame until charred and smoky on the outside, tender '
+              'and succulent inside, served alongside a generous portion of crispy golden chips.',
           price: 420.0,
           category: 'Fast Food',
           merchantId: merchantId,
@@ -282,7 +294,9 @@ class MerchantProvider with ChangeNotifier {
         ProductModel(
           id: '201',
           name: 'Fresh Milk (1L)',
-          description: 'Fresh dairy milk',
+          description:
+              'Creamy, farm-fresh dairy milk bottled at peak freshness. Rich in flavor and perfect for '
+              'your morning tea, coffee, or a tall glass on its own.',
           price: 120.0,
           category: 'Dairy',
           merchantId: merchantId,
@@ -293,7 +307,9 @@ class MerchantProvider with ChangeNotifier {
         ProductModel(
           id: '202',
           name: 'Mixed Vegetables (1kg)',
-          description: 'Farm-fresh seasonal vegetables',
+          description:
+              'A vibrant, hand-picked selection of seasonal vegetables straight from local farms. Crisp, '
+              'nutrient-packed, and bursting with natural flavor for your next home-cooked meal.',
           price: 150.0,
           category: 'Produce',
           merchantId: merchantId,
@@ -307,7 +323,9 @@ class MerchantProvider with ChangeNotifier {
         ProductModel(
           id: '301',
           name: 'Painkillers',
-          description: 'Paracetamol tablets',
+          description:
+              'Fast-acting paracetamol tablets for effective relief from pain and fever. A trusted '
+              'everyday essential to keep on hand for you and your family.',
           price: 50.0,
           category: 'Medicine',
           merchantId: merchantId,
@@ -318,7 +336,9 @@ class MerchantProvider with ChangeNotifier {
         ProductModel(
           id: '302',
           name: 'Vitamin C Tablets',
-          description: 'Immune support supplements',
+          description:
+              'Daily Vitamin C supplements formulated to boost your immune system and keep you feeling '
+              'your best, rain or shine.',
           price: 350.0,
           category: 'Medicine',
           merchantId: merchantId,

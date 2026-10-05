@@ -3,6 +3,7 @@ import 'package:kericho_delivery/presentation/screens/splash_screen.dart';
 import 'package:kericho_delivery/presentation/screens/onboarding_screen.dart';
 import 'package:kericho_delivery/presentation/screens/auth/login_screen.dart';
 import 'package:kericho_delivery/presentation/screens/auth/register_screen.dart';
+import 'package:kericho_delivery/presentation/screens/auth/auth_prompt_screen.dart';
 import 'package:kericho_delivery/presentation/screens/home/home_screen.dart';
 import 'package:kericho_delivery/presentation/screens/menu/menu_screen.dart';
 import 'package:kericho_delivery/presentation/screens/merchant/merchant_screen.dart';
@@ -28,6 +29,7 @@ class AppRouter {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String register = '/register';
+  static const String authPrompt = '/authPrompt';
   static const String home = '/home';
   static const String menu = '/menu';
   static const String merchant = '/merchant';
@@ -55,6 +57,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const LoginScreen());
       case register:
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
+      case authPrompt:
+        return MaterialPageRoute(builder: (_) => const AuthPromptScreen());
       case home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
       case menu:
@@ -65,6 +69,7 @@ class AppRouter {
           builder: (_) => MerchantScreen(
             merchantId: args['merchantId'],
             merchantName: args['merchantName'],
+            merchantImageUrl: args['merchantImageUrl'],
           ),
         );
       case cart:

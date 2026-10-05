@@ -21,28 +21,32 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   final List<OnboardingItem> _onboardingItems = [
     OnboardingItem(
       title: 'One App, Every Kitchen',
-      description: 'Discover restaurants, cafés, bakeries and cloud kitchens near you — all in a single marketplace.',
+      description:
+          'Discover restaurants, cafés, bakeries and cloud kitchens near you — all in a single marketplace.',
       assetImage: AppIcons.deliveryMan,
       color: Colors.white,
       subtitle: 'ONE MARKETPLACE, MANY VENDORS',
     ),
     OnboardingItem(
       title: 'Browse Before You Buy',
-      description: 'Explore menus, prices and ratings instantly — no account needed until you\'re ready to order.',
+      description:
+          'Explore menus, prices and ratings instantly — no account needed until you\'re ready to order.',
       assetImage: AppIcons.shopping,
       color: Colors.white,
       subtitle: 'NO LOGIN REQUIRED',
     ),
     OnboardingItem(
       title: 'Easy M-Pesa Payments',
-      description: 'Pay securely with M-Pesa, card or wallet. Cash on delivery also available for your convenience.',
+      description:
+          'Pay securely with M-Pesa, card or wallet. Cash on delivery also available for your convenience.',
       icon: Icons.phone_android,
       color: Colors.white,
       subtitle: 'SECURE & CONVENIENT',
     ),
     OnboardingItem(
       title: 'Real-Time Tracking',
-      description: 'Track your order live on the map. Know exactly when your delivery arrives.',
+      description:
+          'Track your order live on the map. Know exactly when your delivery arrives.',
       icon: Icons.location_on,
       color: Colors.white,
       subtitle: 'STAY INFORMED',
@@ -63,7 +67,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       ),
     );
     _iconController.forward();
-    
+
     _pageController.addListener(() {
       if (_pageController.page?.round() != _currentPage) {
         _iconController.reset();
@@ -84,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image with enhanced overlay
+          // Background Image with a simple dark scrim
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -93,10 +97,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     'assets/images/fresh-vegetables-fruit-market-stall.jpg',
                   ),
                   fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.5),
-                    BlendMode.darken,
-                  ),
                 ),
               ),
               child: Container(
@@ -105,15 +105,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.2),
-                      Colors.black.withOpacity(0.6),
+                      Colors.black.withOpacity(0.35),
+                      Colors.black.withOpacity(0.75),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-          
+
           // Content
           SafeArea(
             child: Column(
@@ -123,23 +123,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Image.asset(
-                          'assets/images/KulaHub_logo-removebg-preview.png',
-                          height: 64,
-                          fit: BoxFit.contain,
-                        ),
+                      Image.asset(
+                        'assets/LOGO/logo.png',
+                        height: 64,
+                        fit: BoxFit.contain,
                       ),
                       const Spacer(),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(25),
                           border: Border.all(
                             color: Colors.white.withOpacity(0.3),
                             width: 1,
@@ -149,7 +141,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           onPressed: _continueAsGuest,
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
                           ),
                           child: Text(
                             'SKIP',
@@ -182,7 +175,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
                 // Bottom Section
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: Column(
                     children: [
                       // Page Indicators
@@ -192,32 +186,26 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           _onboardingItems.length,
                           (index) => AnimatedContainer(
                             duration: const Duration(milliseconds: 400),
-                            width: _currentPage == index ? 32 : 10,
-                            height: 10,
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            width: _currentPage == index ? 28 : 8,
+                            height: 8,
+                            margin: const EdgeInsets.symmetric(horizontal: 5),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: _currentPage == index ? AppTheme.primaryColor : Colors.white.withOpacity(0.7),
-                              boxShadow: _currentPage == index ? [
-                                BoxShadow(
-                                  color: AppTheme.primaryColor.withOpacity(0.5),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                ),
-                              ] : null,
+                              borderRadius: BorderRadius.circular(4),
+                              color: _currentPage == index
+                                  ? AppTheme.primaryColor
+                                  : Colors.white.withOpacity(0.4),
                             ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
 
                       // Next / Get Started Button
                       SizedBox(
                         width: double.infinity,
-                        height: 58,
-                        child: ElevatedButton(
-                          onPressed: () {
+                        child: GestureDetector(
+                          onTap: () {
                             if (_currentPage < _onboardingItems.length - 1) {
                               _pageController.nextPage(
                                 duration: const Duration(milliseconds: 600),
@@ -227,85 +215,80 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               _continueAsGuest();
                             }
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            elevation: 12,
-                            shadowColor: AppTheme.primaryColor.withOpacity(0.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 17),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      AppTheme.primaryColor.withOpacity(0.35),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _currentPage < _onboardingItems.length - 1 ? 'CONTINUE' : 'START BROWSING',
-                                style: GoogleFonts.afacad(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _currentPage < _onboardingItems.length - 1
+                                      ? 'Continue'
+                                      : 'Start Browsing',
+                                  style: GoogleFonts.afacad(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              if (_currentPage < _onboardingItems.length - 1)
-                                const SizedBox(width: 12),
-                              if (_currentPage < _onboardingItems.length - 1)
-                                AnimatedBuilder(
-                                  animation: _iconController,
-                                  builder: (context, child) {
-                                    return Transform.translate(
-                                      offset: Offset(_iconController.value * 10, 0),
-                                      child: const Icon(
-                                        Icons.arrow_forward_rounded,
-                                        size: 22,
-                                      ),
-                                    );
-                                  },
-                                ),
-                            ],
+                                if (_currentPage <
+                                    _onboardingItems.length - 1) ...[
+                                  const SizedBox(width: 8),
+                                  AnimatedBuilder(
+                                    animation: _iconController,
+                                    builder: (context, child) {
+                                      return Transform.translate(
+                                        offset: Offset(
+                                            _iconController.value * 8, 0),
+                                        child: const Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
 
                       // Sign in prompt
                       if (_currentPage == _onboardingItems.length - 1)
                         Padding(
-                          padding: const EdgeInsets.only(top: 20),
+                          padding: const EdgeInsets.only(top: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 'Already have an account? ',
                                 style: GoogleFonts.afacad(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.5,
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 14,
                                 ),
                               ),
                               GestureDetector(
                                 onTap: _goToLogin,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Colors.white,
-                                        width: 2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'SIGN IN',
-                                    style: GoogleFonts.afacad(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.0,
-                                    ),
+                                child: Text(
+                                  'Sign In',
+                                  style: GoogleFonts.afacad(
+                                    color: AppTheme.primaryColor,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
@@ -331,137 +314,90 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Animated Icon/Asset Container
+          // Animated Icon Badge
           AnimatedBuilder(
             animation: _iconAnimation,
             builder: (context, child) {
               return Transform.scale(
-                scale: 0.8 + (_iconAnimation.value * 0.4),
-                child: Transform.rotate(
-                  angle: _iconAnimation.value * 0.1,
-                  child: Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(75),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 3,
+                scale: 0.85 + (_iconAnimation.value * 0.15),
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 25,
-                          spreadRadius: 5,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: item.assetImage != null
-                              ? Image.asset(
-                                  item.assetImage!,
-                                  width: 75,
-                                  height: 75,
-                                  fit: BoxFit.contain,
-                                )
-                              : Icon(
-                                  item.icon!,
-                                  size: 75,
-                                  color: Colors.white,
-                                ),
-                        ),
-                        // Glow effect
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(75),
-                              gradient: RadialGradient(
-                                center: Alignment.center,
-                                radius: 0.8,
-                                colors: [
-                                  Colors.white.withOpacity(0.2),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
+                    ],
+                  ),
+                  child: Center(
+                    child: item.assetImage != null
+                        ? Image.asset(
+                            item.assetImage!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.contain,
+                          )
+                        : Icon(
+                            item.icon!,
+                            size: 56,
+                            color: AppTheme.primaryColor,
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               );
             },
           ),
 
-          const SizedBox(height: 48),
+          const SizedBox(height: 36),
 
-          // Subtitle
-          Text(
-            item.subtitle,
-            style: GoogleFonts.afacad(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
-              letterSpacing: 3.0,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          // Subtitle badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              item.subtitle,
+              style: GoogleFonts.afacad(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryColor,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
           // Title
           Text(
             item.title,
             textAlign: TextAlign.center,
             style: GoogleFonts.afacad(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
               color: Colors.white,
-              height: 1.1,
-              letterSpacing: -0.5,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withOpacity(0.7),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              height: 1.15,
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
 
           // Description
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              item.description,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.afacad(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.95),
-                height: 1.6,
-                letterSpacing: 0.3,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+          Text(
+            item.description,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.afacad(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withOpacity(0.85),
+              height: 1.5,
             ),
           ),
         ],

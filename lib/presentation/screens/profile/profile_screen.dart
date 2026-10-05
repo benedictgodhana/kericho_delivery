@@ -69,7 +69,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: kBorderColor, width: 1.2),
               ),
-              child: const Icon(CupertinoIcons.back, color: kTextPrimary, size: 20),
+              child: const Icon(CupertinoIcons.back,
+                  color: kTextPrimary, size: 20),
             ),
           ),
           const SizedBox(width: 14),
@@ -93,7 +94,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: kBorderColor, width: 1.2),
               ),
-              child: const Icon(CupertinoIcons.settings, color: kTextPrimary, size: 18),
+              child: const Icon(CupertinoIcons.settings,
+                  color: kTextPrimary, size: 18),
             ),
           ),
         ],
@@ -111,16 +113,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               width: 100,
               height: 100,
-              decoration: const BoxDecoration(color: kCardColor, shape: BoxShape.circle),
-              child: Icon(CupertinoIcons.person, size: 48, color: kTextSecondary.withValues(alpha: 0.5)),
+              decoration: BoxDecoration(
+                color: kPrimaryColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
+              ),
+              child: Icon(CupertinoIcons.person, size: 48, color: kPrimaryColor),
             ),
             const SizedBox(height: 24),
             Text(
               'Please sign in to view profile',
-              style: GoogleFonts.afacad(fontSize: 19, fontWeight: FontWeight.w800, color: kTextPrimary),
+              style: GoogleFonts.afacad(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: kTextPrimary,
+                  letterSpacing: -0.3),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
+            Container(width: 36, height: 2, color: kPrimaryColor),
+            const SizedBox(height: 14),
             Text(
               'Access your orders, saved addresses, and more',
               style: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
@@ -136,25 +148,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: kPrimaryColor,
                     borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(color: kPrimaryColor.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 6)),
-                    ],
                   ),
                   child: Center(
-                    child: Text(
-                      'Sign In',
-                      style: GoogleFonts.afacad(fontSize: 15.5, fontWeight: FontWeight.w700, color: Colors.white),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(CupertinoIcons.person_crop_circle_fill,
+                            color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Sign In',
+                          style: GoogleFonts.afacad(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            GestureDetector(
-              onTap: () => AppRouter.pushNamed(AppRouter.register),
-              child: Text(
-                'Create Account',
-                style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w700, color: kPrimaryColor),
               ),
             ),
           ],
@@ -181,14 +193,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Center(
                   child: Text(
                     user.fullName,
-                    style: GoogleFonts.afacad(fontSize: 21, fontWeight: FontWeight.w800, color: kTextPrimary),
+                    style: GoogleFonts.afacad(
+                        fontSize: 21,
+                        fontWeight: FontWeight.w800,
+                        color: kTextPrimary),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Center(
                   child: Text(
                     _getUserTypeText(user.userType),
-                    style: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
+                    style:
+                        GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -231,15 +247,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Container(
                       width: 40,
                       height: 40,
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
-                      child: const Icon(CupertinoIcons.back, color: Colors.white, size: 20),
+                      decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          shape: BoxShape.circle),
+                      child: const Icon(CupertinoIcons.back,
+                          color: Colors.white, size: 20),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       'Details',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.afacad(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+                      style: GoogleFonts.afacad(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white),
                     ),
                   ),
                   GestureDetector(
@@ -247,8 +269,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Container(
                       width: 40,
                       height: 40,
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
-                      child: const Icon(CupertinoIcons.settings, color: Colors.white, size: 18),
+                      decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          shape: BoxShape.circle),
+                      child: const Icon(CupertinoIcons.settings,
+                          color: Colors.white, size: 18),
                     ),
                   ),
                 ],
@@ -277,7 +302,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 4),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 12, offset: const Offset(0, 4)),
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4)),
             ],
           ),
           child: user.profileImage != null
@@ -287,23 +315,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? CachedNetworkImage(
                           imageUrl: user.profileImage!,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: kPrimaryColor)),
-                          errorWidget: (context, url, error) => Icon(CupertinoIcons.person_fill, size: size * 0.48, color: kTextSecondary),
+                          placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(
+                                  color: kPrimaryColor)),
+                          errorWidget: (context, url, error) => Icon(
+                              CupertinoIcons.person_fill,
+                              size: size * 0.48,
+                              color: kTextSecondary),
                         )
                       : Image.file(
                           File(user.profileImage!),
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Icon(CupertinoIcons.person_fill, size: size * 0.48, color: kTextSecondary),
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                              CupertinoIcons.person_fill,
+                              size: size * 0.48,
+                              color: kTextSecondary),
                         ),
                 )
-              : Icon(CupertinoIcons.person_fill, size: size * 0.48, color: kTextSecondary),
+              : Icon(CupertinoIcons.person_fill,
+                  size: size * 0.48, color: kTextSecondary),
         ),
         Positioned(
           bottom: 2,
           right: 2,
           child: GestureDetector(
-            onTap: _isUploadingAvatar ? null : () => _showAvatarPickerSheet(user),
+            onTap:
+                _isUploadingAvatar ? null : () => _showAvatarPickerSheet(user),
             child: Container(
               width: 30,
               height: 30,
@@ -316,9 +353,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: _isUploadingAvatar
                   ? const Padding(
                       padding: EdgeInsets.all(7),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
-                  : const Icon(CupertinoIcons.camera_fill, size: 14, color: Colors.white),
+                  : const Icon(CupertinoIcons.camera_fill,
+                      size: 14, color: Colors.white),
             ),
           ),
         ),
@@ -332,7 +371,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _buildDetailRow(
           icon: CupertinoIcons.mail_solid,
           label: 'Email',
-          value: (user.email != null && user.email!.isNotEmpty) ? user.email! : 'Not set',
+          value: (user.email != null && user.email!.isNotEmpty)
+              ? user.email!
+              : 'Not set',
         ),
         Divider(height: 28, color: kBorderColor),
         _buildDetailRow(
@@ -356,13 +397,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDetailRow({required IconData icon, required String label, required String value}) {
+  Widget _buildDetailRow(
+      {required IconData icon, required String label, required String value}) {
     return Row(
       children: [
         Container(
           width: 38,
           height: 38,
-          decoration: BoxDecoration(color: kPrimaryColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+          decoration: BoxDecoration(
+              color: kPrimaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle),
           child: Icon(icon, size: 17, color: kPrimaryColor),
         ),
         const SizedBox(width: 14),
@@ -370,11 +414,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: GoogleFonts.afacad(fontSize: 12.5, color: kTextSecondary)),
+              Text(label,
+                  style: GoogleFonts.afacad(
+                      fontSize: 12.5, color: kTextSecondary)),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w700, color: kTextPrimary),
+                style: GoogleFonts.afacad(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: kTextPrimary),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -386,7 +435,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   static const List<String> _monthAbbreviations = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String _formatMemberSince(DateTime date) {
@@ -396,14 +456,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: GoogleFonts.afacad(fontSize: 19, fontWeight: FontWeight.w800, color: kTextPrimary, letterSpacing: -0.2),
+      style: GoogleFonts.afacad(
+          fontSize: 19,
+          fontWeight: FontWeight.w800,
+          color: kTextPrimary,
+          letterSpacing: -0.2),
     );
   }
 
   Widget _buildAccountSection(AppProvider appProvider) {
     final options = [
       (CupertinoIcons.pencil, 'Edit Profile', _editProfile, kTextPrimary),
-      (CupertinoIcons.lock_shield_fill, 'Privacy & Security', _showPrivacySettings, kTextPrimary),
+      (
+        CupertinoIcons.lock_shield_fill,
+        'Privacy & Security',
+        _showPrivacySettings,
+        kTextPrimary
+      ),
       (CupertinoIcons.globe, 'Language', _changeLanguage, kTextPrimary),
       (CupertinoIcons.moon_fill, 'Dark Mode', _toggleTheme, kTextPrimary),
       (CupertinoIcons.square_arrow_right, 'Sign Out', _signOut, kErrorColor),
@@ -451,14 +520,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Icon(icon, size: 20, color: color),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text(label, style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w600, color: color)),
+                  child: Text(label,
+                      style: GoogleFonts.afacad(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: color)),
                 ),
-                Icon(CupertinoIcons.chevron_forward, size: 16, color: kTextSecondary.withValues(alpha: 0.5)),
+                Icon(CupertinoIcons.chevron_forward,
+                    size: 16, color: kTextSecondary.withValues(alpha: 0.5)),
               ],
             ),
           ),
         ),
-        if (showDivider) Divider(height: 1, indent: 16, endIndent: 16, color: kBorderColor),
+        if (showDivider)
+          Divider(height: 1, indent: 16, endIndent: 16, color: kBorderColor),
       ],
     );
   }
@@ -469,9 +544,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset('assets/images/KulaHub_logo-removebg-preview.png', height: 48, fit: BoxFit.contain),
+          Image.asset('assets/LOGO/logo.png', height: 48, fit: BoxFit.contain),
           const SizedBox(height: 12),
-          Text('KulaHub v1.0.0', style: GoogleFonts.afacad(fontSize: 13, color: kTextSecondary)),
+          Text('KulaHub v1.0.0',
+              style: GoogleFonts.afacad(fontSize: 13, color: kTextSecondary)),
           const SizedBox(height: 4),
           Text(
             '© ${DateTime.now().year} KulaHub. All rights reserved.',
@@ -514,7 +590,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _editProfile() {
     AppRouter.pushNamed(
       '/editProfile',
-      arguments: {'user': Provider.of<AppProvider>(context, listen: false).user},
+      arguments: {
+        'user': Provider.of<AppProvider>(context, listen: false).user
+      },
     );
   }
 
@@ -528,7 +606,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           decoration: const BoxDecoration(
             color: kCardColor,
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+            borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24), topRight: Radius.circular(24)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -536,12 +615,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(color: kBorderColor, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(
+                    color: kBorderColor,
+                    borderRadius: BorderRadius.circular(2)),
               ),
               const SizedBox(height: 18),
               Text(
                 'Update Profile Photo',
-                style: GoogleFonts.afacad(fontSize: 17, fontWeight: FontWeight.w800, color: kTextPrimary),
+                style: GoogleFonts.afacad(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: kTextPrimary),
               ),
               const SizedBox(height: 18),
               _buildAvatarPickerOption(
@@ -568,7 +652,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildAvatarPickerOption({required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _buildAvatarPickerOption(
+      {required IconData icon,
+      required String label,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -583,11 +670,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               width: 38,
               height: 38,
-              decoration: BoxDecoration(color: kPrimaryColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: kPrimaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle),
               child: Icon(icon, size: 18, color: kPrimaryColor),
             ),
             const SizedBox(width: 14),
-            Text(label, style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w700, color: kTextPrimary)),
+            Text(label,
+                style: GoogleFonts.afacad(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: kTextPrimary)),
           ],
         ),
       ),
@@ -595,13 +688,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickAvatarImage(UserModel user, ImageSource source) async {
-    final pickedFile = await _imagePicker.pickImage(source: source, maxWidth: 800, imageQuality: 85);
+    final pickedFile = await _imagePicker.pickImage(
+        source: source, maxWidth: 800, imageQuality: 85);
     if (pickedFile == null || !mounted) return;
 
     setState(() => _isUploadingAvatar = true);
     try {
       final appProvider = Provider.of<AppProvider>(context, listen: false);
-      await appProvider.updateUserProfile(user.copyWith(profileImage: pickedFile.path));
+      await appProvider
+          .updateUserProfile(user.copyWith(profileImage: pickedFile.path));
     } finally {
       if (mounted) setState(() => _isUploadingAvatar = false);
     }
@@ -625,13 +720,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: kCardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: Text('Sign Out', style: GoogleFonts.afacad(fontWeight: FontWeight.w800, color: kTextPrimary)),
-          content: Text('Are you sure you want to sign out?', style: GoogleFonts.afacad(color: kTextSecondary)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text('Sign Out',
+              style: GoogleFonts.afacad(
+                  fontWeight: FontWeight.w800, color: kTextPrimary)),
+          content: Text('Are you sure you want to sign out?',
+              style: GoogleFonts.afacad(color: kTextSecondary)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: GoogleFonts.afacad(fontWeight: FontWeight.w700, color: kTextSecondary)),
+              child: Text('Cancel',
+                  style: GoogleFonts.afacad(
+                      fontWeight: FontWeight.w700, color: kTextSecondary)),
             ),
             TextButton(
               onPressed: () {
@@ -639,7 +740,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Provider.of<AppProvider>(context, listen: false).logout();
                 AppRouter.pushNamedAndRemoveUntil(AppRouter.login);
               },
-              child: Text('Sign Out', style: GoogleFonts.afacad(fontWeight: FontWeight.w700, color: kErrorColor)),
+              child: Text('Sign Out',
+                  style: GoogleFonts.afacad(
+                      fontWeight: FontWeight.w700, color: kErrorColor)),
             ),
           ],
         );
@@ -655,14 +758,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: kCardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: Text('Select Language', style: GoogleFonts.afacad(fontWeight: FontWeight.w800, color: kTextPrimary)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text('Select Language',
+              style: GoogleFonts.afacad(
+                  fontWeight: FontWeight.w800, color: kTextPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: Icon(CupertinoIcons.globe, color: kPrimaryColor),
-                title: Text('English', style: GoogleFonts.afacad(color: kTextPrimary)),
+                title: Text('English',
+                    style: GoogleFonts.afacad(color: kTextPrimary)),
                 trailing: appProvider.locale.languageCode == 'en'
                     ? Icon(CupertinoIcons.checkmark_alt, color: kSuccessColor)
                     : null,
@@ -673,7 +780,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               ListTile(
                 leading: Icon(CupertinoIcons.globe, color: kPrimaryColor),
-                title: Text('Kiswahili', style: GoogleFonts.afacad(color: kTextPrimary)),
+                title: Text('Kiswahili',
+                    style: GoogleFonts.afacad(color: kTextPrimary)),
                 trailing: appProvider.locale.languageCode == 'sw'
                     ? Icon(CupertinoIcons.checkmark_alt, color: kSuccessColor)
                     : null,
@@ -693,25 +801,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildBottomNavBar() {
     return Container(
       color: Colors.transparent,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
       child: SafeArea(
         top: false,
         child: Container(
-          height: 68,
+          height: 72,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            color: kCardColor,
-            borderRadius: BorderRadius.circular(32),
+            color: kTextPrimary,
+            borderRadius: BorderRadius.circular(36),
+            border: Border.all(
+                color: kPrimaryColor.withValues(alpha: 0.25), width: 1),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 20, offset: const Offset(0, 8)),
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.28),
+                  blurRadius: 26,
+                  offset: const Offset(0, 12)),
             ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(CupertinoIcons.house_fill, 'Home', false, () => AppRouter.pushNamedAndRemoveUntil(AppRouter.home)),
-              _buildNavItem(CupertinoIcons.square_grid_2x2, 'Menu', false, () => AppRouter.pushNamed(AppRouter.menu)),
+              _buildNavItem(CupertinoIcons.house_fill, 'Home', false,
+                  () => AppRouter.pushNamedAndRemoveUntil(AppRouter.home)),
+              _buildNavItem(CupertinoIcons.square_grid_2x2, 'Menu', false,
+                  () => AppRouter.pushNamed(AppRouter.menu)),
               _buildCartNavItem(),
-              _buildNavItem(CupertinoIcons.gift, 'Rewards', false, () => AppRouter.pushNamed(AppRouter.promotions)),
+              _buildNavItem(CupertinoIcons.gift, 'Rewards', false,
+                  () => AppRouter.pushNamed(AppRouter.promotions)),
               _buildNavItem(CupertinoIcons.person_fill, 'Profile', true, () {}),
             ],
           ),
@@ -720,26 +837,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool selected, VoidCallback onTap) {
+  Widget _buildNavItem(
+      IconData icon, String label, bool selected, VoidCallback onTap) {
+    final color = selected ? kPrimaryColor : Colors.white.withValues(alpha: 0.55);
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         HapticFeedback.lightImpact();
         onTap();
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: selected ? kPrimaryColor : kTextSecondary, size: 24),
+            Icon(icon, color: color, size: 23),
             const SizedBox(height: 4),
             Text(
               label,
               style: GoogleFonts.afacad(
-                color: selected ? kPrimaryColor : kTextSecondary,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                letterSpacing: 0.3,
                 fontSize: 11.5,
               ),
+            ),
+            const SizedBox(height: 3),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: selected ? 14 : 0,
+              height: 2,
+              color: kPrimaryColor,
             ),
           ],
         ),
@@ -754,47 +882,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
         HapticFeedback.mediumImpact();
         AppRouter.pushNamed(AppRouter.cart);
       },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: kPrimaryColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: kPrimaryColor.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4)),
-              ],
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: kPrimaryColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+                color: kPrimaryColor.withValues(alpha: 0.4),
+                blurRadius: 14,
+                offset: const Offset(0, 5)),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Center(
+              child: Icon(CupertinoIcons.cart_fill,
+                  color: Colors.white, size: 22),
             ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Center(
-                  child: Icon(CupertinoIcons.cart_fill, color: Colors.white, size: 22),
-                ),
-                if (appProvider.cartItemCount > 0)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: kErrorColor, shape: BoxShape.circle),
-                      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                      child: Center(
-                        child: Text(
-                          appProvider.cartItemCount > 9 ? '9+' : '${appProvider.cartItemCount}',
-                          style: GoogleFonts.afacad(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
-                        ),
-                      ),
+            if (appProvider.cartItemCount > 0)
+              Positioned(
+                right: -4,
+                top: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                      color: kErrorColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: kTextPrimary, width: 2)),
+                  constraints:
+                      const BoxConstraints(minWidth: 20, minHeight: 20),
+                  child: Center(
+                    child: Text(
+                      appProvider.cartItemCount > 9
+                          ? '9+'
+                          : '${appProvider.cartItemCount}',
+                      style: GoogleFonts.afacad(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800),
                     ),
                   ),
-              ],
-            ),
-          ),
-        ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
-

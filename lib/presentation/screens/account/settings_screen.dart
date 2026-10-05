@@ -175,14 +175,20 @@ class SettingsScreen extends StatelessWidget {
           GestureDetector(
             onTap: () => Navigator.of(context).maybePop(),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: kCardColor,
                 shape: BoxShape.circle,
-                border: Border.all(color: kBorderColor, width: 1.2),
+                border: Border.all(color: kBorderColor, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3)),
+                ],
               ),
-              child: const Icon(CupertinoIcons.back, color: kTextPrimary, size: 20),
+              child: const Icon(CupertinoIcons.back, color: kTextPrimary, size: 19),
             ),
           ),
           const SizedBox(width: 14),
@@ -211,9 +217,19 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: kCardColor,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: kBorderColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 5)),
+        ],
       ),
-      child: Column(children: children),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(children: children),
+      ),
     );
   }
 

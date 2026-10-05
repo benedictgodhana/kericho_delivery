@@ -30,35 +30,35 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.2, 0.8, curve: Curves.easeInOut),
       ),
     );
-    
+
     _slideAnimation = Tween<double>(begin: 60.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
       ),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
       ),
     );
-    
+
     _imageOpacityAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
       ),
     );
-    
+
     _controller.forward();
   }
 
@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen>
               },
             ),
           ),
-          
+
           // Gradient overlay for better text readability
           Positioned.fill(
             child: Container(
@@ -137,30 +137,16 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Brand logo badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.95),
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 20,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: Image.asset(
-                                'assets/images/KulaHub_logo-removebg-preview.png',
-                                height: 160,
-                                fit: BoxFit.contain,
-                              ),
+                            // Brand logo
+                            Image.asset(
+                              'assets/LOGO/logo.png',
+                              height: 160,
+                              fit: BoxFit.contain,
                             ),
-                            
+
                             const SizedBox(height: 32),
-                            
-                            // Subtitle 1
+
+                            // Tagline
                             Text(
                               'Your City\'s Kitchens,',
                               style: GoogleFonts.afacad(
@@ -178,8 +164,8 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            
-                            // Subtitle 2 with accent color
+
+                            // Accent line
                             Text(
                               'All In One App',
                               style: GoogleFonts.afacad(
@@ -197,130 +183,32 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            
-                            const SizedBox(height: 30),
-                            
-                            // Description
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'One Marketplace.',
-                                    style: GoogleFonts.afacad(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w300,
-                                      color: Colors.white.withOpacity(0.8),
-                                      letterSpacing: 0.8,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Many Food Businesses.',
-                                    style: GoogleFonts.afacad(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                      letterSpacing: 0.8,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 8),
-                            
+
+                            const SizedBox(height: 16),
+
                             Text(
-                              'One seamless ordering experience.',
+                              'One marketplace. Many food businesses.',
                               style: GoogleFonts.afacad(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white.withOpacity(0.8),
-                                fontStyle: FontStyle.italic,
-                                letterSpacing: 0.8,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.85),
+                                letterSpacing: 0.3,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            
-                            const SizedBox(height: 50),
-                            
-                            // "Get Started" button
-                            ScaleTransition(
-                              scale: CurvedAnimation(
-                                parent: _controller,
-                                curve: const Interval(0.6, 1.0, curve: Curves.elasticOut),
-                              ),
-                              child: Container(
-                                width: 220,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppTheme.primaryColor.withOpacity(0.9),
-                                      AppTheme.secondaryColor.withOpacity(0.9),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(30),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primaryColor.withOpacity(0.5),
-                                      blurRadius: 20,
-                                      spreadRadius: 3,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(30),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(30),
-                                    onTap: () {
-                                      AppRouter.pushReplacementNamed(AppRouter.onboarding);
-                                    },
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Get Started',
-                                            style: GoogleFonts.afacad(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w700,
-                                              color: Colors.white,
-                                              letterSpacing: 1.2,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          const Icon(
-                                            Icons.arrow_forward_rounded,
-                                            color: Colors.white,
-                                            size: 22,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 40),
-                            
+
+                            const SizedBox(height: 56),
+
                             // Loading indicator
                             Column(
                               children: [
                                 SizedBox(
-                                  width: 20,
-                                  height: 20,
+                                  width: 22,
+                                  height: 22,
                                   child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                                    strokeWidth: 2.5,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white.withOpacity(0.8),
+                                      AppTheme.primaryColor,
                                     ),
                                   ),
                                 ),
@@ -328,10 +216,10 @@ class _SplashScreenState extends State<SplashScreen>
                                 Text(
                                   'Finding the best bites near you...',
                                   style: GoogleFonts.afacad(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w300,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w400,
                                     color: Colors.white.withOpacity(0.7),
-                                    letterSpacing: 0.5,
+                                    letterSpacing: 0.3,
                                   ),
                                 ),
                               ],

@@ -14,16 +14,33 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   // KulaHub brand palette (matches home/cart/profile/settings screens)
   static const Color kPrimaryColor = Color(0xFFFF5A36);
-  static const Color kPrimaryDark = Color(0xFFC73F22);
   static const Color kBorderColor = Color(0xFFF0E4D8);
   static const Color kTextPrimary = Color(0xFF16181D);
   static const Color kTextSecondary = Color(0xFF6C757D);
 
   final _formKey = GlobalKey<FormBuilderState>();
   bool _isLoading = false;
+
+  late final AnimationController _waveController;
+
+  @override
+  void initState() {
+    super.initState();
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _waveController.dispose();
+    super.dispose();
+  }
 
   String? _phoneValidator(String? value) {
     if (value == null || value.isEmpty) {
@@ -70,85 +87,116 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrimaryColor,
-      body: Column(
-        children: [
-          Expanded(flex: 38, child: _buildTopPanel()),
-          Expanded(flex: 62, child: _buildFormSheet()),
-        ],
+      backgroundColor: Colors.white,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final topHeight = constraints.maxHeight * 0.38;
+          return Stack(
+            children: [
+              Positioned.fill(child: _buildBackgroundLayer()),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: topHeight,
+                child: _buildTopContent(),
+              ),
+              Positioned(
+                top: topHeight,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _buildFormSheet(),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTopPanel() {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [kPrimaryColor, kPrimaryDark],
+  Widget _buildBackgroundLayer() {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/a776e7d9-d788-4112-810a-dc0945c0071e.jpg',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      child: Stack(
+        Positioned.fill(
+          child: Container(color: Colors.black.withValues(alpha: 0.32)),
+        ),
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  kPrimaryColor.withValues(alpha: 0.45),
+                  kPrimaryColor.withValues(alpha: 0.15),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: -60,
+          top: -40,
+          child: Container(
+            width: 180,
+            height: 180,
+            decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle),
+          ),
+        ),
+        Positioned(
+          left: -50,
+          bottom: -70,
+          child: Container(
+            width: 160,
+            height: 160,
+            decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTopContent() {
+    return SafeArea(
+      bottom: false,
+      child: Column(
         children: [
-          Positioned(
-            right: -60,
-            top: -40,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).maybePop(),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle),
+                  child: const Icon(CupertinoIcons.back,
+                      color: Colors.white, size: 19),
+                ),
+              ),
             ),
           ),
-          Positioned(
-            left: -50,
-            bottom: -70,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
-            ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                        child: const Icon(CupertinoIcons.back, color: Colors.white, size: 19),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 6)),
-                        ],
-                      ),
-                      child: Image.asset(
-                        'assets/images/KulaHub_logo-removebg-preview.png',
-                        height: 46,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          Expanded(
+            child: Center(
+              child: Image.asset(
+                'assets/LOGO/logo.png',
+                height: 96,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],
@@ -161,7 +209,8 @@ class _LoginScreenState extends State<LoginScreen> {
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(36), topRight: Radius.circular(36)),
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(36), topRight: Radius.circular(36)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
@@ -170,14 +219,35 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Welcome back \u{1F44B}',
-                style: GoogleFonts.afacad(fontSize: 24, fontWeight: FontWeight.w800, color: kTextPrimary),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Welcome back ',
+                    style: GoogleFonts.afacad(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: kTextPrimary),
+                  ),
+                  AnimatedBuilder(
+                    animation: _waveController,
+                    builder: (context, child) {
+                      return Transform.rotate(
+                        angle: (_waveController.value - 0.5) * 0.6,
+                        alignment: Alignment.bottomCenter,
+                        child: child,
+                      );
+                    },
+                    child: Text('\u{1F44B}',
+                        style: GoogleFonts.afacad(fontSize: 24)),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(
                 'Enter your phone number to continue',
-                style: GoogleFonts.afacad(fontSize: 14.5, color: kTextSecondary),
+                style:
+                    GoogleFonts.afacad(fontSize: 14.5, color: kTextSecondary),
               ),
               const SizedBox(height: 26),
               _buildPhoneField(),
@@ -199,13 +269,16 @@ class _LoginScreenState extends State<LoginScreen> {
       name: 'phone',
       keyboardType: TextInputType.phone,
       validator: _phoneValidator,
-      style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w600, color: kTextPrimary),
+      style: GoogleFonts.afacad(
+          fontSize: 14.5, fontWeight: FontWeight.w600, color: kTextPrimary),
       decoration: InputDecoration(
         labelText: 'Phone Number',
         labelStyle: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary),
-        floatingLabelStyle: GoogleFonts.afacad(fontSize: 13, color: kPrimaryColor, fontWeight: FontWeight.w700),
+        floatingLabelStyle: GoogleFonts.afacad(
+            fontSize: 13, color: kPrimaryColor, fontWeight: FontWeight.w700),
         hintText: '7XX XXX XXX',
-        hintStyle: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary.withValues(alpha: 0.7)),
+        hintStyle: GoogleFonts.afacad(
+            fontSize: 14, color: kTextSecondary.withValues(alpha: 0.7)),
         prefixIcon: Padding(
           padding: const EdgeInsets.only(left: 16, right: 12),
           child: Center(
@@ -214,9 +287,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('\u{1F1F0}\u{1F1EA}', style: GoogleFonts.afacad(fontSize: 18)),
+                Text('\u{1F1F0}\u{1F1EA}',
+                    style: GoogleFonts.afacad(fontSize: 18)),
                 const SizedBox(width: 8),
-                Text('+254', style: GoogleFonts.afacad(color: kTextPrimary, fontWeight: FontWeight.w700, fontSize: 14)),
+                Text('+254',
+                    style: GoogleFonts.afacad(
+                        color: kTextPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14)),
                 const SizedBox(width: 10),
                 Container(width: 1.2, height: 20, color: kBorderColor),
               ],
@@ -225,11 +303,20 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         filled: false,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-        border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: kBorderColor, width: 1.3)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: kBorderColor, width: 1.3)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: kPrimaryColor, width: 1.6)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: Colors.red)),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide: const BorderSide(color: Colors.black, width: 2.5)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide: const BorderSide(color: Colors.black, width: 2.5)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide: const BorderSide(color: Colors.black, width: 2.5)),
+        errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide: const BorderSide(color: Colors.red, width: 2.5)),
       ),
     );
   }
@@ -241,14 +328,21 @@ class _LoginScreenState extends State<LoginScreen> {
         onTap: _isLoading ? null : _continue,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 17),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: kPrimaryColor,
-            borderRadius: BorderRadius.circular(28),
           ),
           child: Center(
             child: _isLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                : Text('Continue', style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.5, color: Colors.white))
+                : Text('Continue',
+                    style: GoogleFonts.afacad(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white)),
           ),
         ),
       ),
@@ -261,7 +355,11 @@ class _LoginScreenState extends State<LoginScreen> {
         Expanded(child: Divider(color: kBorderColor, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('or', style: GoogleFonts.afacad(color: kTextSecondary, fontWeight: FontWeight.w600, fontSize: 13)),
+          child: Text('or',
+              style: GoogleFonts.afacad(
+                  color: kTextSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13)),
         ),
         Expanded(child: Divider(color: kBorderColor, thickness: 1)),
       ],
@@ -287,11 +385,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 'assets/icons/google.png',
                 width: 20,
                 height: 20,
-                errorBuilder: (context, error, stackTrace) =>
-                    Text('G', style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryColor)),
+                errorBuilder: (context, error, stackTrace) => Text('G',
+                    style: GoogleFonts.afacad(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: kPrimaryColor)),
               ),
               const SizedBox(width: 12),
-              Text('Continue with Google', style: GoogleFonts.afacad(fontSize: 15, fontWeight: FontWeight.w700, color: kTextPrimary)),
+              Text('Continue with Google',
+                  style: GoogleFonts.afacad(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: kTextPrimary)),
             ],
           ),
         ),

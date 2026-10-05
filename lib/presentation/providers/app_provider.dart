@@ -10,7 +10,7 @@ import 'package:kericho_delivery/data/models/cart_model.dart';
 class AppProvider with ChangeNotifier {
   // Singleton instance
   static AppProvider? _instance;
-  
+
   static AppProvider get instance {
     _instance ??= AppProvider._();
     return _instance!;
@@ -41,11 +41,21 @@ class AppProvider with ChangeNotifier {
   Locale get locale => _locale;
   List<MerchantModel> get favorites => _favorites;
   List<OrderModel> get orderHistory => _orderHistory;
-  
+
   // Cart getters
-  int get cartItemCount => _cart.items.fold(0, (sum, item) => sum + item.quantity);
-  double get cartTotal => _cart.items.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
-  double get cartSubtotal => _cart.items.fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
+  int get cartItemCount =>
+      _cart.items.fold(0, (sum, item) => sum + item.quantity);
+  double get cartTotal =>
+      _cart.items.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+  double get cartSubtotal => _cart.items
+      .fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
+
+  int getQuantityForProduct(String productId) {
+    for (final item in _cart.items) {
+      if (item.product.id == productId) return item.quantity;
+    }
+    return 0;
+  }
 
   // Initialize app
   Future<void> _initialize() async {
@@ -129,10 +139,10 @@ class AppProvider with ChangeNotifier {
       _cart = CartModel(items: []);
       _favorites.clear();
       _orderHistory.clear();
-      
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      
+
       _error = null;
       notifyListeners();
     } catch (e) {
@@ -202,15 +212,16 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> updateCartItem(String productId, int quantity) async {
-    final index = _cart.items.indexWhere((item) => item.product.id == productId);
-    
+    final index =
+        _cart.items.indexWhere((item) => item.product.id == productId);
+
     if (index >= 0) {
       if (quantity <= 0) {
         _cart.items.removeAt(index);
       } else {
         _cart.items[index] = _cart.items[index].copyWith(quantity: quantity);
       }
-      
+
       await _saveCart();
       notifyListeners();
     }
@@ -255,16 +266,19 @@ class AppProvider with ChangeNotifier {
 
   // Theme Methods
   Future<void> toggleTheme() async {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('theme_mode', _themeMode == ThemeMode.light ? 'light' : 'dark');
+    await prefs.setString(
+        'theme_mode', _themeMode == ThemeMode.light ? 'light' : 'dark');
     notifyListeners();
   }
 
   Future<void> setTheme(ThemeMode mode) async {
     _themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('theme_mode', mode == ThemeMode.light ? 'light' : 'dark');
+    await prefs.setString(
+        'theme_mode', mode == ThemeMode.light ? 'light' : 'dark');
     notifyListeners();
   }
 
@@ -306,7 +320,7 @@ class AppProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString('user_data');
-      
+
       if (userJson != null) {
         _user = UserModel.fromJson(userJson as Map<String, dynamic>);
       }
@@ -332,7 +346,7 @@ class AppProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cartJson = prefs.getString('cart_data');
-      
+
       if (cartJson != null) {
         _cart = CartModel.fromJson(cartJson as Map<String, dynamic>);
       }
@@ -358,10 +372,11 @@ class AppProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final favoritesJson = prefs.getString('favorites');
-      
+
       if (favoritesJson != null) {
         final List<dynamic> favoritesList = favoritesJson as List<dynamic>;
-        _favorites = favoritesList.map((json) => MerchantModel.fromJson(json)).toList();
+        _favorites =
+            favoritesList.map((json) => MerchantModel.fromJson(json)).toList();
       }
     } catch (e) {
       if (kDebugMode) {
@@ -373,7 +388,8 @@ class AppProvider with ChangeNotifier {
   Future<void> _saveFavorites() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final favoritesJson = _favorites.map((merchant) => merchant.toJson()).toList();
+      final favoritesJson =
+          _favorites.map((merchant) => merchant.toJson()).toList();
       await prefs.setString('favorites', favoritesJson.toString());
     } catch (e) {
       if (kDebugMode) {
@@ -385,7 +401,7 @@ class AppProvider with ChangeNotifier {
   Future<void> _loadPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Load theme
       final theme = prefs.getString('theme_mode');
       if (theme == 'dark') {
@@ -393,17 +409,17 @@ class AppProvider with ChangeNotifier {
       } else {
         _themeMode = ThemeMode.light;
       }
-      
+
       // Load locale
       final languageCode = prefs.getString('language_code') ?? 'en';
       final countryCode = prefs.getString('country_code') ?? 'US';
       _locale = Locale(languageCode, countryCode);
-      
+
       // Load location if exists
       final lat = prefs.getString('latitude');
       final lng = prefs.getString('longitude');
       final address = prefs.getString('address');
-      
+
       if (lat != null && lng != null) {
         _currentLocation = LocationModel(
           latitude: double.parse(lat),

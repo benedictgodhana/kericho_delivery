@@ -17,9 +17,8 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  // KulaHub brand palette (matches home/menu screens)
+  // KulaHub brand palette (matches home/menu/merchant screens)
   static const Color kPrimaryColor = Color(0xFFFF5A36);
-  static const Color kSecondaryColor = Color(0xFFFFB020);
   static const Color kBackgroundColor = Color(0xFFFFF8F1);
   static const Color kCardColor = Colors.white;
   static const Color kTextPrimary = Color(0xFF16181D);
@@ -27,7 +26,9 @@ class _CartScreenState extends State<CartScreen> {
   static const Color kBorderColor = Color(0xFFF0E4D8);
   static const Color kErrorColor = Color(0xFFE5484D);
 
-  static const double _flatDeliveryFee = 50.0;
+  // Refined accents
+  static const Color kInk = Color(0xFF1B1816);
+  static const Color kHairline = Color(0xFFE9DCCB);
 
   void _updateQuantity(String productId, int quantity) {
     HapticFeedback.lightImpact();
@@ -46,23 +47,34 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: kCardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: Text('Clear Cart', style: GoogleFonts.afacad(fontWeight: FontWeight.w800, color: kTextPrimary)),
+          surfaceTintColor: Colors.transparent,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+          title: Text('Clear your cart?',
+              style: GoogleFonts.afacad(
+                  fontSize: 21, fontWeight: FontWeight.w700, color: kInk)),
           content: Text(
-            'Are you sure you want to clear your cart?',
-            style: GoogleFonts.afacad(color: kTextSecondary),
+            'All items will be removed. This can\'t be undone.',
+            style: GoogleFonts.afacad(
+                fontSize: 14.5, color: kTextSecondary, height: 1.4),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: GoogleFonts.afacad(fontWeight: FontWeight.w700, color: kTextSecondary)),
+              child: Text('Keep items',
+                  style: GoogleFonts.afacad(
+                      fontWeight: FontWeight.w700, color: kTextSecondary)),
             ),
             TextButton(
               onPressed: () {
                 Provider.of<AppProvider>(context, listen: false).clearCart();
                 Navigator.pop(context);
               },
-              child: Text('Clear', style: GoogleFonts.afacad(fontWeight: FontWeight.w700, color: kErrorColor)),
+              child: Text('Clear cart',
+                  style: GoogleFonts.afacad(
+                      fontWeight: FontWeight.w700, color: kErrorColor)),
             ),
           ],
         );
@@ -80,15 +92,21 @@ class _CartScreenState extends State<CartScreen> {
     return groups;
   }
 
-  void _proceedToCheckout() {
+  void _proceedToCheckout() async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    final merchantProvider = Provider.of<MerchantProvider>(context, listen: false);
+    final merchantProvider =
+        Provider.of<MerchantProvider>(context, listen: false);
 
     if (appProvider.cart.items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your cart is empty')),
       );
       return;
+    }
+
+    if (appProvider.user == null) {
+      final authenticated = await AppRouter.pushNamed(AppRouter.authPrompt);
+      if (authenticated != true || !mounted) return;
     }
 
     final merchantGroups = _groupByMerchant(appProvider.cart.items);
@@ -122,11 +140,14 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       backgroundColor: kBackgroundColor,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
-            _buildHeader(cart.items.isNotEmpty),
+            _buildHeader(cart.items.isNotEmpty, appProvider.cartItemCount),
             Expanded(
-              child: cart.items.isEmpty ? _buildEmptyCart() : _buildCartWithItems(),
+              child: cart.items.isEmpty
+                  ? _buildEmptyCart()
+                  : _buildCartWithItems(),
             ),
           ],
         ),
@@ -134,7 +155,9 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildHeader(bool hasItems) {
+  // ───────────────────────── HEADER ─────────────────────────
+
+  Widget _buildHeader(bool hasItems, int itemCount) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Row(
@@ -142,45 +165,85 @@ class _CartScreenState extends State<CartScreen> {
           GestureDetector(
             onTap: () => Navigator.of(context).maybePop(),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: kCardColor,
                 shape: BoxShape.circle,
-                border: Border.all(color: kBorderColor, width: 1.2),
+                border: Border.all(color: kHairline, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3)),
+                ],
               ),
-              child: const Icon(CupertinoIcons.back, color: kTextPrimary, size: 20),
+              child: const Icon(CupertinoIcons.back, color: kInk, size: 19),
             ),
           ),
-          const SizedBox(width: 14),
-          Text(
-            'My Cart',
-            style: GoogleFonts.afacad(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: kTextPrimary,
-              letterSpacing: -0.3,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'My Cart',
+                  style: GoogleFonts.afacad(
+                    fontSize: 27,
+                    fontWeight: FontWeight.w700,
+                    color: kInk,
+                    letterSpacing: -0.4,
+                    height: 1.1,
+                  ),
+                ),
+                if (hasItems)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      '$itemCount ${itemCount == 1 ? 'item' : 'items'}',
+                      style: GoogleFonts.afacad(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                          color: kTextSecondary),
+                    ),
+                  ),
+              ],
             ),
           ),
-          const Spacer(),
           if (hasItems)
             GestureDetector(
               onTap: _clearCart,
               child: Container(
-                width: 40,
-                height: 40,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                 decoration: BoxDecoration(
-                  color: kCardColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: kBorderColor, width: 1.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: kHairline, width: 1),
                 ),
-                child: const Icon(CupertinoIcons.trash, color: kErrorColor, size: 18),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(CupertinoIcons.trash,
+                        color: kTextSecondary, size: 15),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Clear',
+                      style: GoogleFonts.afacad(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: kTextSecondary),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
       ),
     );
   }
+
+  // ───────────────────────── EMPTY ─────────────────────────
 
   Widget _buildEmptyCart() {
     return Center(
@@ -190,37 +253,68 @@ class _CartScreenState extends State<CartScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(color: kCardColor, shape: BoxShape.circle),
-              child: Icon(CupertinoIcons.cart, size: 48, color: kTextSecondary.withValues(alpha: 0.5)),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Your cart is empty',
-              style: GoogleFonts.afacad(fontSize: 22, fontWeight: FontWeight.w800, color: kTextPrimary),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Add items from restaurants or stores\nto get started',
-              style: GoogleFonts.afacad(fontSize: 14.5, color: kTextSecondary, height: 1.4),
-              textAlign: TextAlign.center,
+              width: 116,
+              height: 116,
+              decoration: BoxDecoration(
+                color: kCardColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: kHairline, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10)),
+                ],
+              ),
+              child: Icon(CupertinoIcons.bag,
+                  size: 46, color: kPrimaryColor.withValues(alpha: 0.9)),
             ),
             const SizedBox(height: 28),
+            Text(
+              'Your cart is empty',
+              style: GoogleFonts.afacad(
+                  fontSize: 25, fontWeight: FontWeight.w700, color: kInk),
+            ),
+            const SizedBox(height: 12),
+            Container(width: 36, height: 2, color: kPrimaryColor),
+            const SizedBox(height: 14),
+            Text(
+              'Add items from restaurants or stores\nto get started.',
+              style: GoogleFonts.afacad(
+                  fontSize: 15, color: kTextSecondary, height: 1.45),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
             GestureDetector(
               onTap: () => AppRouter.pushNamedAndRemoveUntil(AppRouter.home),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 34, vertical: 16),
                 decoration: BoxDecoration(
-                  color: kPrimaryColor,
-                  borderRadius: BorderRadius.circular(28),
+                  color: kInk,
+                  borderRadius: BorderRadius.circular(30),
                   boxShadow: [
-                    BoxShadow(color: kPrimaryColor.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 6)),
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.22),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8)),
                   ],
                 ),
-                child: Text(
-                  'Start Shopping',
-                  style: GoogleFonts.afacad(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Start Shopping',
+                      style: GoogleFonts.afacad(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                          color: Colors.white),
+                    ),
+                    const SizedBox(width: 10),
+                    const Icon(CupertinoIcons.arrow_right,
+                        color: kPrimaryColor, size: 17),
+                  ],
                 ),
               ),
             ),
@@ -229,6 +323,8 @@ class _CartScreenState extends State<CartScreen> {
       ),
     );
   }
+
+  // ───────────────────────── ITEMS ─────────────────────────
 
   Widget _buildCartWithItems() {
     final appProvider = Provider.of<AppProvider>(context);
@@ -240,39 +336,44 @@ class _CartScreenState extends State<CartScreen> {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
             children: [
               if (merchantGroups.length > 1)
                 Container(
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 20),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: kSecondaryColor.withValues(alpha: 0.15),
+                    color: kPrimaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(CupertinoIcons.info_circle_fill, color: kSecondaryColor, size: 18),
+                      const Icon(CupertinoIcons.info_circle,
+                          color: kPrimaryColor, size: 17),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Checkout ships from one store at a time. Items from other '
                           'stores stay in your cart.',
-                          style: GoogleFonts.afacad(fontSize: 12.5, color: kTextPrimary, height: 1.3),
+                          style: GoogleFonts.afacad(
+                              fontSize: 13, color: kTextPrimary, height: 1.35),
                         ),
                       ),
                     ],
                   ),
                 ),
               for (final entry in merchantGroups.entries) ...[
-                _buildMerchantGroupHeader(merchantProvider, entry.key),
-                const SizedBox(height: 10),
-                for (final item in entry.value)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildCartItem(item),
-                  ),
-                const SizedBox(height: 8),
+                if (merchantGroups.length > 1)
+                  _buildMerchantGroupHeader(merchantProvider, entry.key),
+                for (var i = 0; i < entry.value.length; i++) ...[
+                  _buildCartItem(entry.value[i]),
+                  if (i < entry.value.length - 1)
+                    const Divider(height: 1, thickness: 1, color: kHairline),
+                ],
+                const SizedBox(height: 18),
               ],
             ],
           ),
@@ -282,121 +383,158 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildMerchantGroupHeader(MerchantProvider merchantProvider, String merchantId) {
+  Widget _buildMerchantGroupHeader(
+      MerchantProvider merchantProvider, String merchantId) {
     final merchant = merchantProvider.getMerchantById(merchantId);
-    return Row(
-      children: [
-        Icon(CupertinoIcons.bag_fill, size: 16, color: kPrimaryColor),
-        const SizedBox(width: 8),
-        Text(
-          merchant?.name ?? 'Store',
-          style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w800, color: kTextPrimary),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 6),
+      child: Row(
+        children: [
+          Container(width: 3, height: 18, color: kPrimaryColor),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              merchant?.name ?? 'Store',
+              style: GoogleFonts.afacad(
+                  fontSize: 18, fontWeight: FontWeight.w700, color: kInk),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
+  Widget _buildItemImage(CartItem item) {
+    Widget fallback() => Container(
+          color: kBorderColor.withValues(alpha: 0.6),
+          child: const Icon(CupertinoIcons.cube_box,
+              color: kTextSecondary, size: 24),
+        );
+
+    final url = item.product.imageUrl;
+    if (url == null) return fallback();
+    if (url.startsWith('http')) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback(),
+      );
+    }
+    return Image.asset(url, fit: BoxFit.cover);
+  }
+
   Widget _buildCartItem(CartItem item) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: kCardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorderColor, width: 1),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
+    final subtitle =
+        (item.selectedOptions != null && item.selectedOptions!.isNotEmpty)
+            ? item.selectedOptions!.join(', ')
+            : 'Regular';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: 72,
-              height: 72,
-              color: kBackgroundColor,
-              child: item.product.imageUrl != null
-                  ? (item.product.imageUrl!.startsWith('http')
-                      ? Image.network(item.product.imageUrl!, fit: BoxFit.cover)
-                      : Image.asset(item.product.imageUrl!, fit: BoxFit.cover))
-                  : Icon(CupertinoIcons.cube_box, color: kTextSecondary),
+          Container(
+            width: 78,
+            height: 78,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: _buildItemImage(item),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.product.name,
-                  style: GoogleFonts.afacad(fontSize: 15, fontWeight: FontWeight.w700, color: kTextPrimary),
+                  style: GoogleFonts.afacad(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w700,
+                      color: kInk,
+                      height: 1.2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (item.selectedOptions != null && item.selectedOptions!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      item.selectedOptions!.join(', '),
-                      style: GoogleFonts.afacad(fontSize: 12, color: kTextSecondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.afacad(
+                      fontSize: 13, color: kTextSecondary, height: 1.3),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (item.specialInstructions != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: 3),
                     child: Text(
                       '"${item.specialInstructions!}"',
-                      style: GoogleFonts.afacad(fontSize: 12, fontStyle: FontStyle.italic, color: kTextSecondary),
+                      style: GoogleFonts.afacad(
+                          fontSize: 12.5,
+                          fontStyle: FontStyle.italic,
+                          color: kTextSecondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                const SizedBox(height: 8),
-                Text(
-                  'KSh ${(item.product.price * item.quantity).toStringAsFixed(0)}',
-                  style: GoogleFonts.afacad(fontSize: 15, fontWeight: FontWeight.w800, color: kPrimaryColor),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildQuantityPill(item),
+                    const Spacer(),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _removeItem(item.product.id),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 4),
+                        child: Text(
+                          'Remove',
+                          style: GoogleFonts.afacad(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                              color: kTextSecondary,
+                              decoration: TextDecoration.underline,
+                              decorationColor:
+                                  kTextSecondary.withValues(alpha: 0.5)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          const SizedBox(width: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              GestureDetector(
-                onTap: () => _removeItem(item.product.id),
-                child: Icon(CupertinoIcons.xmark_circle_fill, size: 20, color: kTextSecondary.withValues(alpha: 0.5)),
+              Text(
+                'KSh ',
+                style: GoogleFonts.afacad(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: kPrimaryColor),
               ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: kBackgroundColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildStepperButton(
-                      icon: CupertinoIcons.minus,
-                      onTap: () => _updateQuantity(item.product.id, item.quantity - 1),
-                    ),
-                    SizedBox(
-                      width: 26,
-                      child: Text(
-                        '${item.quantity}',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.afacad(fontWeight: FontWeight.w700, color: kTextPrimary, fontSize: 14),
-                      ),
-                    ),
-                    _buildStepperButton(
-                      icon: CupertinoIcons.add,
-                      onTap: () => _updateQuantity(item.product.id, item.quantity + 1),
-                    ),
-                  ],
-                ),
+              Text(
+                (item.product.price * item.quantity).toStringAsFixed(0),
+                style: GoogleFonts.afacad(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: kInk),
               ),
             ],
           ),
@@ -405,74 +543,150 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildStepperButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _buildQuantityPill(CartItem item) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: kCardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: kHairline, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildStepperButton(
+            icon: CupertinoIcons.minus,
+            onTap: () => _updateQuantity(item.product.id, item.quantity - 1),
+          ),
+          SizedBox(
+            width: 30,
+            child: Text(
+              '${item.quantity}',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.afacad(
+                  fontWeight: FontWeight.w700, color: kInk, fontSize: 15),
+            ),
+          ),
+          _buildStepperButton(
+            icon: CupertinoIcons.add,
+            filled: true,
+            onTap: () => _updateQuantity(item.product.id, item.quantity + 1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepperButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool filled = false,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 28,
         height: 28,
         alignment: Alignment.center,
-        child: Icon(icon, size: 14, color: kPrimaryColor),
+        decoration: BoxDecoration(
+          color: filled ? kInk : kBackgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 13, color: filled ? Colors.white : kInk),
       ),
     );
   }
 
+  // ───────────────────────── CHECKOUT ─────────────────────────
+
   Widget _buildCheckoutSection(AppProvider appProvider, int merchantCount) {
     final cart = appProvider.cart;
-    final total = appProvider.cartSubtotal + _flatDeliveryFee - (cart.discountAmount ?? 0);
+    final total = appProvider.cartSubtotal - (cart.discountAmount ?? 0);
+    final bottomPad = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      padding: EdgeInsets.fromLTRB(24, 14, 24, 20 + bottomPad),
       decoration: BoxDecoration(
         color: kCardColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, -4)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -6)),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 18),
             decoration: BoxDecoration(
-              color: kBackgroundColor,
-              borderRadius: BorderRadius.circular(16),
+              color: kHairline,
+              borderRadius: BorderRadius.circular(2),
             ),
-            child: Column(
+          ),
+          _buildSummaryRow('Subtotal', appProvider.cartSubtotal),
+          if (cart.discountAmount != null && cart.discountAmount! > 0)
+            _buildSummaryRow('Discount', -cart.discountAmount!,
+                accent: kPrimaryColor),
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 12),
+            child: Row(
               children: [
-                _buildSummaryRow('Subtotal', appProvider.cartSubtotal),
-                _buildSummaryRow('Delivery fee (est.)', _flatDeliveryFee),
-                if (cart.discountAmount != null && cart.discountAmount! > 0)
-                  _buildSummaryRow('Discount', -cart.discountAmount!),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1, color: kBorderColor),
+                Expanded(
+                  child: Text(
+                    'Delivery fee calculated at checkout',
+                    style: GoogleFonts.afacad(
+                        fontSize: 12.5,
+                        fontStyle: FontStyle.italic,
+                        color: kTextSecondary),
+                  ),
                 ),
-                _buildSummaryRow('Total (est.)', total, isTotal: true),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: GestureDetector(
-              onTap: _proceedToCheckout,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 17),
-                decoration: BoxDecoration(
-                  color: kPrimaryColor,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(color: kPrimaryColor.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 6)),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
+          const Divider(height: 1, thickness: 1, color: kHairline),
+          const SizedBox(height: 14),
+          _buildSummaryRow('Total', total, isTotal: true),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _proceedToCheckout,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(26, 10, 10, 10),
+              decoration: BoxDecoration(
+                color: kInk,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8)),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Text(
                     'Proceed to Checkout',
-                    style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                    style: GoogleFonts.afacad(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        color: Colors.white),
                   ),
-                ),
+                  const Spacer(),
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: const BoxDecoration(
+                        color: kPrimaryColor, shape: BoxShape.circle),
+                    child: const Icon(CupertinoIcons.arrow_right,
+                        color: kInk, size: 18),
+                  ),
+                ],
               ),
             ),
           ),
@@ -481,27 +695,36 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, double amount, {bool isTotal = false}) {
+  Widget _buildSummaryRow(String label, double amount,
+      {bool isTotal = false, Color? accent}) {
+    final isNegative = amount < 0;
+    final formatted =
+        '${isNegative ? '- ' : ''}KSh ${amount.abs().toStringAsFixed(0)}';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            label,
+            isTotal ? label.toUpperCase() : label,
             style: GoogleFonts.afacad(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
-              color: isTotal ? kTextPrimary : kTextSecondary,
+              fontSize: isTotal ? 13.5 : 15,
+              fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
+              letterSpacing: isTotal ? 1.8 : 0.1,
+              color: isTotal ? kInk : kTextSecondary,
             ),
           ),
           const Spacer(),
           Text(
-            'KSh ${amount.toStringAsFixed(0)}',
-            style: GoogleFonts.afacad(
-              fontSize: isTotal ? 18 : 14,
-              fontWeight: isTotal ? FontWeight.w800 : FontWeight.w600,
-              color: isTotal ? kPrimaryColor : kTextPrimary,
-            ),
+            formatted,
+            style: isTotal
+                ? GoogleFonts.afacad(
+                    fontSize: 24, fontWeight: FontWeight.w700, color: kInk)
+                : GoogleFonts.afacad(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: accent ?? kTextPrimary),
           ),
         ],
       ),

@@ -29,7 +29,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (value == null || value.isEmpty) {
       return 'Email address is required';
     }
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Enter a valid email';
     }
@@ -58,7 +59,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please agree to the User Agreement and Privacy Policy', style: GoogleFonts.afacad(color: Colors.white))),
+        SnackBar(
+            content: Text(
+                'Please agree to the User Agreement and Privacy Policy',
+                style: GoogleFonts.afacad(color: Colors.white))),
       );
       return;
     }
@@ -110,7 +114,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Container(
               width: 180,
               height: 180,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  shape: BoxShape.circle),
             ),
           ),
           Positioned(
@@ -119,7 +125,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Container(
               width: 160,
               height: 160,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  shape: BoxShape.circle),
             ),
           ),
           SafeArea(
@@ -135,28 +143,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Container(
                         width: 38,
                         height: 38,
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                        child: const Icon(CupertinoIcons.back, color: Colors.white, size: 19),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle),
+                        child: const Icon(CupertinoIcons.back,
+                            color: Colors.white, size: 19),
                       ),
                     ),
                   ),
                 ),
                 Expanded(
                   child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 6)),
-                        ],
-                      ),
-                      child: Image.asset(
-                        'assets/images/KulaHub_logo-removebg-preview.png',
-                        height: 40,
-                        fit: BoxFit.contain,
-                      ),
+                    child: Image.asset(
+                      'assets/LOGO/logo.png',
+                      height: 40,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -173,7 +174,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(36), topRight: Radius.circular(36)),
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(36), topRight: Radius.circular(36)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -182,9 +184,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Create Account', style: GoogleFonts.afacad(fontSize: 24, fontWeight: FontWeight.w800, color: kTextPrimary)),
+              Text('Create Account',
+                  style: GoogleFonts.afacad(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: kTextPrimary)),
               const SizedBox(height: 6),
-              Text('Sign up to get started', style: GoogleFonts.afacad(fontSize: 13.5, color: kTextSecondary)),
+              Text('Sign up to get started',
+                  style: GoogleFonts.afacad(
+                      fontSize: 13.5, color: kTextSecondary)),
               const SizedBox(height: 24),
               _buildFieldLabel('Email Address'),
               _buildTextField(
@@ -192,7 +200,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 hint: 'Enter your email address',
                 validator: _emailValidator,
                 keyboardType: TextInputType.emailAddress,
-                prefixIcon: Icon(CupertinoIcons.mail_solid, size: 19, color: kTextSecondary),
+                prefixIcon: Icon(CupertinoIcons.mail_solid,
+                    size: 19, color: kTextSecondary),
               ),
               const SizedBox(height: 16),
               _buildFieldLabel('Password'),
@@ -201,10 +210,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 hint: 'Enter your password',
                 validator: _passwordValidator,
                 obscure: _obscurePassword,
-                prefixIcon: Icon(CupertinoIcons.lock_fill, size: 19, color: kTextSecondary),
+                prefixIcon: Icon(CupertinoIcons.lock_fill,
+                    size: 19, color: kTextSecondary),
                 suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye, size: 19, color: kTextSecondary),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  icon: Icon(
+                      _obscurePassword
+                          ? CupertinoIcons.eye_slash
+                          : CupertinoIcons.eye,
+                      size: 19,
+                      color: kTextSecondary),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
               const SizedBox(height: 16),
@@ -214,10 +230,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 hint: 'Re-enter your password',
                 validator: _confirmPasswordValidator,
                 obscure: _obscureConfirmPassword,
-                prefixIcon: Icon(CupertinoIcons.lock_fill, size: 19, color: kTextSecondary),
+                prefixIcon: Icon(CupertinoIcons.lock_fill,
+                    size: 19, color: kTextSecondary),
                 suffixIcon: IconButton(
-                  icon: Icon(_obscureConfirmPassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye, size: 19, color: kTextSecondary),
-                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                  icon: Icon(
+                      _obscureConfirmPassword
+                          ? CupertinoIcons.eye_slash
+                          : CupertinoIcons.eye,
+                      size: 19,
+                      color: kTextSecondary),
+                  onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword),
                 ),
               ),
               const SizedBox(height: 18),
@@ -227,7 +250,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 22),
               _buildSocialSection('Other ways to sign up'),
               const SizedBox(height: 24),
-              _buildSwitchRow('Already have an account? ', 'Sign In', _goToLogin),
+              _buildSwitchRow(
+                  'Already have an account? ', 'Sign In', _goToLogin),
             ],
           ),
         ),
@@ -238,7 +262,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildFieldLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(label, style: GoogleFonts.afacad(fontSize: 13, fontWeight: FontWeight.w600, color: kTextSecondary)),
+      child: Text(label,
+          style: GoogleFonts.afacad(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: kTextSecondary)),
     );
   }
 
@@ -256,20 +284,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       obscureText: obscure,
       keyboardType: keyboardType,
       validator: validator,
-      style: GoogleFonts.afacad(fontSize: 14.5, fontWeight: FontWeight.w600, color: kTextPrimary),
+      style: GoogleFonts.afacad(
+          fontSize: 14.5, fontWeight: FontWeight.w600, color: kTextPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.afacad(fontSize: 14, color: kTextSecondary.withValues(alpha: 0.7)),
-        prefixIcon: prefixIcon == null ? null : Padding(padding: const EdgeInsets.only(left: 4), child: prefixIcon),
+        hintStyle: GoogleFonts.afacad(
+            fontSize: 14, color: kTextSecondary.withValues(alpha: 0.7)),
+        prefixIcon: prefixIcon == null
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(left: 4), child: prefixIcon),
         prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 0),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: kFieldFill,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: const BorderSide(color: kPrimaryColor, width: 1.5)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: const BorderSide(color: Colors.red)),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: const BorderSide(color: kPrimaryColor, width: 1.5)),
+        errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: const BorderSide(color: Colors.red)),
       ),
     );
   }
@@ -283,9 +325,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           height: 22,
           child: Checkbox(
             value: _agreedToTerms,
-            onChanged: (value) => setState(() => _agreedToTerms = value ?? false),
+            onChanged: (value) =>
+                setState(() => _agreedToTerms = value ?? false),
             activeColor: kPrimaryColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),
@@ -296,10 +340,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: RichText(
               text: TextSpan(
                 children: [
-                  TextSpan(text: "I've read and agreed to ", style: GoogleFonts.afacad(fontSize: 12.5, color: kTextSecondary)),
-                  TextSpan(text: 'User Agreement', style: GoogleFonts.afacad(fontSize: 12.5, color: kPrimaryColor, fontWeight: FontWeight.w700)),
-                  TextSpan(text: ' and ', style: GoogleFonts.afacad(fontSize: 12.5, color: kTextSecondary)),
-                  TextSpan(text: 'Privacy Policy', style: GoogleFonts.afacad(fontSize: 12.5, color: kPrimaryColor, fontWeight: FontWeight.w700)),
+                  TextSpan(
+                      text: "I've read and agreed to ",
+                      style: GoogleFonts.afacad(
+                          fontSize: 12.5, color: kTextSecondary)),
+                  TextSpan(
+                      text: 'User Agreement',
+                      style: GoogleFonts.afacad(
+                          fontSize: 12.5,
+                          color: kPrimaryColor,
+                          fontWeight: FontWeight.w700)),
+                  TextSpan(
+                      text: ' and ',
+                      style: GoogleFonts.afacad(
+                          fontSize: 12.5, color: kTextSecondary)),
+                  TextSpan(
+                      text: 'Privacy Policy',
+                      style: GoogleFonts.afacad(
+                          fontSize: 12.5,
+                          color: kPrimaryColor,
+                          fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
@@ -322,8 +382,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           child: Center(
             child: _isLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                : Text(label, style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.5, color: Colors.white))
+                : Text(label,
+                    style: GoogleFonts.afacad(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white)),
           ),
         ),
       ),
@@ -333,7 +401,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildSocialSection(String label) {
     return Column(
       children: [
-        Text(label, style: GoogleFonts.afacad(fontSize: 13, color: kTextSecondary)),
+        Text(label,
+            style: GoogleFonts.afacad(fontSize: 13, color: kTextSecondary)),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -344,8 +413,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 'assets/icons/google.png',
                 width: 20,
                 height: 20,
-                errorBuilder: (context, error, stackTrace) =>
-                    Text('G', style: GoogleFonts.afacad(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryColor)),
+                errorBuilder: (context, error, stackTrace) => Text('G',
+                    style: GoogleFonts.afacad(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: kPrimaryColor)),
               ),
             ),
           ],
@@ -354,7 +426,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildSocialButton({required VoidCallback onTap, required Widget child}) {
+  Widget _buildSocialButton(
+      {required VoidCallback onTap, required Widget child}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -373,10 +446,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(prefix, style: GoogleFonts.afacad(color: kTextSecondary, fontSize: 13.5)),
+        Text(prefix,
+            style: GoogleFonts.afacad(color: kTextSecondary, fontSize: 13.5)),
         GestureDetector(
           onTap: onTap,
-          child: Text(action, style: GoogleFonts.afacad(color: kPrimaryColor, fontWeight: FontWeight.w700, fontSize: 13.5)),
+          child: Text(action,
+              style: GoogleFonts.afacad(
+                  color: kPrimaryColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5)),
         ),
       ],
     );
